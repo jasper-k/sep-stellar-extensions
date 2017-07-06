@@ -1,14 +1,19 @@
 package nl.qsight.stellar;
 
+import com.google.common.collect.ImmutableMap;
 import org.adrianwalker.multilinestring.Multiline;
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+
+import org.apache.metron.common.dsl.Context;
+import org.apache.metron.common.dsl.StellarFunctions;
+import org.apache.metron.common.stellar.StellarProcessor;
+
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-import static org.apache.metron.common.utils.StellarProcessorUtils.run;
+import java.util.Map;
+
+//import static org.apache.metron.common.utils.StellarProcessorUtils.run;
 
 public class ExtractValuesTest {
 
@@ -18,9 +23,39 @@ public class ExtractValuesTest {
     @Multiline
     private String event;
 
+    private static Context context;
+    private static final String EXTRACT_FIELDS_KEY = "sep.whitelist.extract.fields";
+
+    @Before
+    public void setup() throws Exception {
+
+        context = new Context.Builder()
+                .with( Context.Capabilities.GLOBAL_CONFIG
+                        , () -> ImmutableMap.of( EXTRACT_FIELDS_KEY
+                                , "ip_dst_port|protocol|ip_dst_addr"
+                                , "protocol"
+                                , "TCP"
+                        )
+                )
+                .build();
+    }
 
     @Test
     public void testExtractValues() throws Exception {
 
+        //Object result = run("EXTRACT_VALUES(protocol,ip_dst_port)", ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "original_string","some_message"));
+        Object result = run("SYSTEM_ENV_GET(protocol)", ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "original_string","some_message"));
+        //Map<String,String> resultMap = (Map<String,String>) result;
+        Boolean bla = false;
+        //Assert.assertTrue(resultMap.get("ip_dst_addr").equals("185.70.112.55"));
+        //Assert.assertTrue(resultMap.get("protocol").equals("UDP"));
+
     }
+
+    public Object run(String rule, Map<String, Object> variables) throws Exception {
+        StellarProcessor processor = new StellarProcessor();
+        //Assert.assertTrue(rule + " not valid.", processor.validate(rule, context));
+        return processor.parse(rule, x -> variables.get(x), StellarFunctions.FUNCTION_RESOLVER(), context);
+    }
+
 }

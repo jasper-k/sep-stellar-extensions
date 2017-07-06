@@ -52,7 +52,7 @@ public class JsonArrayToListFunction {
         @Override
         public Object apply(List<Object> list) throws ParseException{
 
-            if (!(list.size() == 2)) {
+            if (list.size() < 2) {
                 throw new IllegalStateException("Requires at least a JSON string and a key (string)");
             }
             String jsonAsString = (String) list.get(0);

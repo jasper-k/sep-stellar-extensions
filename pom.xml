@@ -12,21 +12,22 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <global_metron_version>0.4.0-SNAPSHOT</global_metron_version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.metron</groupId>
             <artifactId>metron-common</artifactId>
-            <version>0.4.0</version>
+            <version>${global_metron_version}</version>
             <!-- NOTE: We will want to depend on the deployed common on the classpath. -->
         </dependency>
         <dependency>
             <groupId>org.apache.metron</groupId>
             <artifactId>metron-common</artifactId>
-            <version>0.4.0</version>
+            <version>${global_metron_version}</version>
             <type>test-jar</type>
-            <scope>test</scope>
+          <!--  <scope>test</scope> -->
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>

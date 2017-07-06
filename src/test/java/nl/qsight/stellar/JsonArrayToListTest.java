@@ -16,13 +16,13 @@ public class JsonArrayToListTest {
     /** {
      "rules": [{
      "source_ip": "10.10.20.10",
-     "destination_ip.include": "192.168.0.0/24",
+     "destination_ip.include.range": "192.168.0.0/24",
      "reason": "Cant fix the application",
      "new_risk": "4",
      "order": "3"
      },{"source_ip": {},
      "destination_ip.exclude": "192.168.0.10",
-     "user": "admin",
+     "user.include.list": "admin,supervisor",
      "time": {},
      "reason": "Allow risk, just for logging",
      "new_risk": "1",
@@ -40,6 +40,7 @@ public class JsonArrayToListTest {
         sb.append("JSONARRAY_TOLIST('")
                 .append(rulesJsonAsString)
                 .append("','rules'").append(')');
+
         Object res = run(sb.toString().replaceAll("(\n|\\s)",""),new HashedMap());
         JSONArray rulesJSONArray = (JSONArray) res;
         Assert.assertTrue(rulesJSONArray.size() == 2);
