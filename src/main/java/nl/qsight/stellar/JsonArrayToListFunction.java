@@ -9,27 +9,26 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.IllegalFormatException;
-import java.util.List;
+import java.util.*;
 
 /**
  {
  "rules": [{
-    "source_ip": "10.10.20.10",
-    "destination_ip.include": "192.168.0.0/24",
-    "reason": "Can't fix the application",
+    "ip_src_addr": "10.10.20.10",
+    "ip_dst_addr.include.range": "192.168.0.0/24",
+    "reason": "Cannot fix the application",
     "new_risk": "4",
-    "order": "3"  
- },    {      
-    "source_ip": {},
-    "destination_ip.exclude": "192.168.0.10",
-    "user": {!admin},
+    "order": "3"
+    },
+    {"ip_src_addr.include": "169.10.34.56",
+    "ip_dst_addr.exclude": "192.168.0.10",
+    "ip_dst_port.include.list": "(8010,8012,9046)",
+    "user.include.list": "(admin,supervisor)",
+    "protocol": "tcp",
     "time": {},
     "reason": "Allow risk, just for logging",
     "new_risk": "1",
-    "order": "4"  
+    "order": "4"
  }]
  }
  */
@@ -40,10 +39,10 @@ public class JsonArrayToListFunction {
     /**
      * Stellar Function: JSONARRAY_TOLIST
      * <p>
-     * Converts a JSON object passed as string into a list of strings. The key of the JSON array has to be passed as a parameter
+     * Converts a JSON object passed as string into a list of (JSON) strings. The key of the JSON array has to be passed as a parameter
      */
     @Stellar(name = "JSONARRAY_TOLIST"
-            , description = "Checks whether a raised alert is whitelisted according to a set of rules applied to various event fields."
+            , description = "Converts a JSON object passed as string into a list of (JSON) strings."
             , params = {"json_as_string - The JSON Object to extract from as a string"
             , "array_key - The key of the JSON array to turn into a list"}
             , returns = "List of all the JSON array members as strings")
@@ -66,17 +65,14 @@ public class JsonArrayToListFunction {
                 throw new ParseException("Argument ["+jsonAsString+"] could not be parsed as valid JSON",e);
              }
 
+            List<String> outList = new ArrayList<>();
             Object rulesObject = json.get(key);
             if (rulesObject != null) {
-
-                return ((JSONArray) rulesObject);
+                for (Object rule : ((JSONArray) rulesObject)) {
+                    outList.add(rule.toString());
+                }
             }
-            else {
-                return new JSONArray();
-            }
-
+                return outList;
         }
-
-
     }
 }

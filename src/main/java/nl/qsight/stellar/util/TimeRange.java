@@ -1,0 +1,109 @@
+package nl.qsight.stellar.util;
+
+import com.cronutils.model.Cron;
+import com.cronutils.model.CronType;
+import com.cronutils.model.definition.CronDefinition;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.model.time.ExecutionTime;
+import com.cronutils.parser.CronParser;
+import nl.qsight.stellar.WhitelistTimeRangeParsingException;
+import org.apache.log4j.Logger;
+import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.ZoneOffset;
+import org.threeten.bp.ZonedDateTime;
+
+
+/**
+   "time.include.range": "0 23 * 6 2-6|8H"
+ */
+
+public class TimeRange {
+
+    private static final Logger LOG = Logger.getLogger(TimeRange.class);
+
+    private String definition;
+    private Cron unixCron;
+    private ExecutionTime executionTime;
+    private Long durationInSeconds;
+
+    private Boolean isValid;
+
+    public TimeRange(String def) {
+        definition = def;
+        parseDefinition();
+    }
+
+    private void parseDefinition() {
+
+        try {
+            String[] defParts = definition.split("\\|");
+            //###TO_DO : can duration be empty ?? ###
+            if (defParts.length == 2 ) {
+                durationInSeconds = getWhiteListDuration(defParts[1]);
+
+            }
+            parseCron(defParts[0]);        }
+        catch (Exception e) {
+
+        }
+        isValid = true;
+    }
+
+    private void parseCron(String cronDef) {
+
+        CronDefinition cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX);
+        CronParser parser = new CronParser(cronDefinition);
+
+        unixCron = parser.parse(cronDef);
+        executionTime = ExecutionTime.forCron(unixCron);
+
+    }
+
+    public Boolean isAlertInWhiteListRange(Long timestamp) {
+
+        LocalDateTime alertLocalDateTime = LocalDateTime.ofEpochSecond(timestamp/1000L, 0, ZoneOffset.UTC);
+        ZonedDateTime alertZonedDateTime = ZonedDateTime.of(alertLocalDateTime,ZoneOffset.UTC);
+        ZonedDateTime startLastWhiteListingBeforeAlert = executionTime.lastExecution(alertZonedDateTime).get();
+        LocalDateTime endTimeWhitelisting = startLastWhiteListingBeforeAlert.toLocalDateTime().plusSeconds(durationInSeconds);
+
+        //## TO_DO First condition can be removed ?? alertLocalDateTime.isAfter(startLastWhiteListingBeforeAlert.toLocalDateTime()) &&
+        if (alertLocalDateTime.isBefore(endTimeWhitelisting)){
+            return true;
+        }
+        return false;
+    }
+
+    private static Long getWhiteListDuration(String durationDef) throws WhitelistTimeRangeParsingException {
+
+        try {
+              String[] durationStringParts = durationDef.split("(?<=\\d)(?=\\D)");
+
+              Long duration = Long.parseLong(durationStringParts[0]);
+              String duration_unit = durationStringParts[1];
+
+              switch (duration_unit) {
+                    case "M":
+                        return duration*60L;
+                    case "H":
+                        return duration*3600L;
+                    case "D":
+                        return duration*86400L;
+                    default:
+                        throw new Exception();
+                }
+
+        } catch (Exception e) {
+            throw new WhitelistTimeRangeParsingException("Could not parse or get whitelist duration from whitelist time range notation : "+durationDef,e.getCause());
+        }
+
+    }
+
+    public Boolean isValid() {
+        return isValid;
+    }
+
+    public String getDefinition() {
+        return definition;
+    }
+
+}

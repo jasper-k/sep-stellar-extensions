@@ -2,27 +2,30 @@ package nl.qsight.stellar;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.collections.map.HashedMap;
-import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.apache.metron.common.utils.StellarProcessorUtils.run;
-import static org.apache.metron.common.utils.StellarProcessorUtils.runPredicate;
 
 public class JsonArrayToListTest {
 
     /** {
      "rules": [{
-     "source_ip": "10.10.20.10",
-     "destination_ip.include.range": "192.168.0.0/24",
-     "reason": "Cant fix the application",
+     "ip_src_addr": "10.10.20.10",
+     "ip_dst_addr.include.range": "192.168.0.0/24",
+     "reason": "Cannot fix the application",
      "new_risk": "4",
      "order": "3"
-     },{"source_ip": {},
-     "destination_ip.exclude": "192.168.0.10",
-     "user.include.list": "admin,supervisor",
+     },{"ip_src_addr.include": "169.10.34.56",
+     "ip_dst_addr.exclude": "192.168.0.10",
+     "ip_dst_port.include.list": "(8010,8012,9046)",
+     "user.include.list": "(admin,supervisor)",
+     "protocol": "tcp",
      "time": {},
      "reason": "Allow risk, just for logging",
      "new_risk": "1",
@@ -41,12 +44,18 @@ public class JsonArrayToListTest {
                 .append(rulesJsonAsString)
                 .append("','rules'").append(')');
 
-        Object res = run(sb.toString().replaceAll("(\n|\\s)",""),new HashedMap());
-        JSONArray rulesJSONArray = (JSONArray) res;
-        Assert.assertTrue(rulesJSONArray.size() == 2);
-        JSONObject rule1 = (JSONObject) rulesJSONArray.get(0);
+        //Stellar parser does not like newlines
+        Object res = run(sb.toString().replaceAll("\n",""),new HashedMap());
+        List<String> rulesList = (List<String>) res;
+
+        Assert.assertTrue(rulesList.size() == 2);
+        String rule1String = rulesList.get(0);
+
+        JSONParser jsonParser = new JSONParser();
+        JSONObject rule1 = (JSONObject) jsonParser.parse(rule1String);
+
         Assert.assertTrue(rule1.get("source_ip") != null);
-        Assert.assertTrue(((String) rule1.get("source_ip")).equals("10.10.20.10"));
+        Assert.assertTrue(rule1.get("source_ip").equals("10.10.20.10"));
     }
 
 }

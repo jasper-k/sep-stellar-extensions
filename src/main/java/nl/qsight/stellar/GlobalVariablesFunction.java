@@ -13,10 +13,10 @@ public class GlobalVariablesFunction {
     /**
      * Stellar Function: GET_GLOBAL_VAR
      * <p>
-     * Return the value of a key on Metrons Global Variables.
+     * Return the value of a key on Metron Global Variables.
      */
     @Stellar(name = "GET_GLOBAL_VAR"
-            , description = "Return the value of a key on Metrons Global Variables."
+            , description = "Return the value of a key on Metron Global Variables."
             , params = {"key - The key of the variable to return"}
             , returns = "The value as String")
     public static class GetGlobalVariable implements StellarFunction {

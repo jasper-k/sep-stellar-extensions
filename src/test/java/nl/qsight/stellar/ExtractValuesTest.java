@@ -2,15 +2,16 @@ package nl.qsight.stellar;
 
 import com.google.common.collect.ImmutableMap;
 import org.adrianwalker.multilinestring.Multiline;
-
 import org.apache.metron.common.dsl.Context;
 import org.apache.metron.common.dsl.StellarFunctions;
 import org.apache.metron.common.stellar.StellarProcessor;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 //import static org.apache.metron.common.utils.StellarProcessorUtils.run;
@@ -31,8 +32,8 @@ public class ExtractValuesTest {
 
         context = new Context.Builder()
                 .with( Context.Capabilities.GLOBAL_CONFIG
-                        , () -> ImmutableMap.of( EXTRACT_FIELDS_KEY
-                                , "ip_dst_port|protocol|ip_dst_addr"
+                        , () -> ImmutableMap.of(EXTRACT_FIELDS_KEY
+                                , "'_ip_dst_port',ip_dst_port,'_code',code,'_ip_dst_addr',ip_dst_addr,'_timestamp',timestamp,'_protocol',protocol"
                                 , "protocol"
                                 , "TCP"
                         )
@@ -41,20 +42,29 @@ public class ExtractValuesTest {
     }
 
     @Test
-    public void testExtractValues() throws Exception {
+    public void testJoinAndSplit() throws Exception {
 
-        //Object result = run("EXTRACT_VALUES(protocol,ip_dst_port)", ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "original_string","some_message"));
-        Object result = run("SYSTEM_ENV_GET(protocol)", ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "original_string","some_message"));
-        //Map<String,String> resultMap = (Map<String,String>) result;
-        Boolean bla = false;
-        //Assert.assertTrue(resultMap.get("ip_dst_addr").equals("185.70.112.55"));
-        //Assert.assertTrue(resultMap.get("protocol").equals("UDP"));
+        Object globalRes = run("GET_GLOBAL_VAR('"+EXTRACT_FIELDS_KEY+"')", new HashMap<>());
+        String joinFieldsParam = (String) globalRes;
+        Object joinRes = run("JOIN(["+joinFieldsParam+"],'^')", ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "timestamp","1498640504554"));
 
+ //       Object joinRes = run("JOIN(['_ip_dst_addr',ip_dst_addr,'_timestamp',timestamp,'_ip_dest_port',ip_dest_port,'_protocol',proetocol],'^')",
+ //               ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "timestamp","1498640504554","rebuildArguments",rebuildArguments));
+
+        String joinedFields = (String) joinRes;
+        Object splitRes = run("SPLIT('"+joinedFields+"','^')", new HashMap<>());
+        ArrayList<String> fieldValueList = (ArrayList<String>) splitRes;
+
+        Object remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(SPLIT('"+joinedFields+"','^'))", new HashMap<>());
+        Map<String,String> mappedFields = (Map<String,String>) remapRes;
+
+        Assert.assertTrue(mappedFields.containsValue("185.70.112.55"));
+        Assert.assertTrue(mappedFields.containsValue("1498640504554"));
+        Assert.assertTrue(mappedFields.keySet().size()==4);
     }
 
     public Object run(String rule, Map<String, Object> variables) throws Exception {
         StellarProcessor processor = new StellarProcessor();
-        //Assert.assertTrue(rule + " not valid.", processor.validate(rule, context));
         return processor.parse(rule, x -> variables.get(x), StellarFunctions.FUNCTION_RESOLVER(), context);
     }
 

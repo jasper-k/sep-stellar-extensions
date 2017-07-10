@@ -1,10 +1,12 @@
 package nl.qsight.stellar;
 
+import nl.qsight.stellar.util.WhiteListRule;
 import org.apache.log4j.Logger;
 import org.apache.metron.common.dsl.*;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ExtractValuesFunctions {
 
@@ -15,8 +17,8 @@ public class ExtractValuesFunctions {
    @Stellar( name="LIST_OF_FIELDS_AND_KEYS_TO_MAP"
             , description="Joins the components in the list of strings with the specified delimiter. The components are meant" +
             " to point to message variables"
-            , params = { "list - List of fields", "delim - String delimiter"}
-            , returns = "String"
+            , params = { "list - List of variable names and their values (or absent if null)"}
+            , returns = "map of variable names and values (of non-null variables only)"
     )
     public static class ListFieldsAndKeysToMapFunction implements StellarFunction {
 
@@ -24,20 +26,27 @@ public class ExtractValuesFunctions {
 
         @Override
         public Object apply(List<Object> args, Context context) {
+
+            if (args.size() != 1) {
+                throw new IllegalStateException("Requires at least a list of variable names and variable values");
+            }
             List<Object> arg1 = (List<Object>) args.get(0);
             Map<String,String> outMap = new HashMap<>();
 
-            Map<String,String> incrMap = new HashMap<>();
-            String key = null;
+            String keyOut = null;
+            Boolean isRequiredKey = false;
+            Boolean isKey = false;
 
             for (Object obj : arg1) {
-                String value = null;
-                if (extractFields.contains(obj)) {
-                    key = obj.toString();
+                isKey = obj.toString().startsWith("_");
+
+                if (isKey) {
+                    keyOut = obj.toString().replaceFirst("_","");
+                    isRequiredKey = extractFields.contains(keyOut);
+                    continue;
                 }
-                else {
-                    value = obj.toString();
-                    outMap.put(key, value);
+                if (!isKey && isRequiredKey) {
+                    outMap.put(keyOut, obj.toString());
                 }
             }
             return outMap;
@@ -46,51 +55,33 @@ public class ExtractValuesFunctions {
         @Override
         public void initialize(Context context) {
             LOG.info("Initializing ExtractValue Function");
-            Map<String, Object> config = getConfig(context);
+            Map<String, Object> config = getGlobalConfig(context);
 
             if (config.containsKey(EXTRACT_FIELDS_KEY)) {
                 String fields = (String) config.get(EXTRACT_FIELDS_KEY);
 
                 LOG.info("Found global config key ["+EXTRACT_FIELDS_KEY+"] with value : ["+fields+"]");
-                extractFields = new HashSet<>(Arrays.asList(fields.split(Pattern.quote(","))));
+                Set<String> keySet = new HashSet<>(Arrays.asList(fields.split(Pattern.quote(","))));
+                extractFields = keySet.stream().filter(line -> !line.startsWith("'"))
+                                                //remove the technical '_' key indicators
+                                                .collect(Collectors.toSet());
+                //################//
+                WhiteListRule.setConfigWhitelistFields(extractFields);
             }
             else {
                 extractFields = new HashSet<>();
             }
+
             initialized = true;
         }
 
-        private static Map<String, Object> getConfig(Context context) {
+        private static Map<String, Object> getGlobalConfig(Context context) {
             return (Map<String, Object>) context.getCapability(Context.Capabilities.GLOBAL_CONFIG, false).orElse(new HashMap<>());
         }
 
         @Override
         public boolean isInitialized() {
             return initialized;
-        }
-    }
-
-    @Stellar( name="REBUILD_ARGS"
-            , description="Joins the components in the list of strings with the specified delimiter. The components are meant" +
-            " to point to message variables"
-            , params = { "list - List of fields", "delim - String delimiter"}
-            , returns = "String"
-    )
-    public static class RebuildArgumentListFunction extends BaseStellarFunction {
-        @Override
-        public Object apply(List<Object> args) {
-            List<Object> arg1 = Arrays.asList(((String) args.get(0)).split(","));
-
-            StringBuilder sb = new StringBuilder();
-            for (Object obj : arg1) {
-                sb.append("'")
-                        .append(obj)
-                        .append("',")
-                        .append(obj)
-                        .append(",");
-            }
-            sb.deleteCharAt(sb.length()-1);
-            return sb.toString();
         }
     }
 
