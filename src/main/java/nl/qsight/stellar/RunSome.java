@@ -1,9 +1,5 @@
 package nl.qsight.stellar;
 
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,14 +8,10 @@ import java.util.List;
  */
 public class RunSome {
 
-    private static DateTimeFormatter DTF = DateTimeFormat.forPattern("dd-MM-yyyy");
 
     public static void main(String[] args) {
 
-        DateTime startDate = null;
 
-        startDate = DTF.parseDateTime("23-06-1990");
-        System.out.println(startDate.toString());
         List<String> bla = new ArrayList<>();
 
         bla.add("niets");

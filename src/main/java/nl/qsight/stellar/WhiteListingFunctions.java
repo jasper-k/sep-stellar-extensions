@@ -7,8 +7,10 @@ import org.apache.metron.common.configuration.EnrichmentConfigurations;
 
 import org.apache.metron.common.dsl.BaseStellarFunction;
 import org.apache.metron.common.dsl.Stellar;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ import java.util.Map;
 
 public class WhiteListingFunctions {
 
+    protected static final Logger LOG = LoggerFactory.getLogger(WhiteListingFunctions.class);
     /**
      * Stellar Function: IS_WHITELISTED
      * <p>
@@ -62,9 +65,14 @@ public class WhiteListingFunctions {
 
             WhiteListRule rule = new WhiteListRule(ruleAsJsonString);
             if (rule.isValid() && rule.isWhiteListed(alertFieldsAndValues)) {
-                    return rule.getWhiteListAlertAdditions();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] was whitelistlisted by rule : [" + ruleAsJsonString + "]");
+                }
+                return rule.getWhiteListAlertAdditions();
             }
-
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Alert : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] was NOT whitelistlisted by rule : ["+ruleAsJsonString+"]");
+            }
             return null;
         }
     }

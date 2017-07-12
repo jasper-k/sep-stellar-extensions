@@ -26,7 +26,7 @@ public class TimeRange {
     private ExecutionTime executionTime;
     private Long durationInSeconds;
 
-    private Boolean isValid;
+    private Boolean isValid = false;
 
     public TimeRange(String def) {
         definition = def;
@@ -37,25 +37,29 @@ public class TimeRange {
 
         try {
             String[] defParts = definition.split("\\|");
-            //###TO_DO : can duration be empty ?? ###
-            if (defParts.length == 2 ) {
-                durationInSeconds = getWhiteListDuration(defParts[1]);
+
+            if (defParts.length < 2 ) {
+                throw new WhitelistTimeRangeParsingException("Could not parse whitelist time range def : "+definition);
 
             }
+            durationInSeconds = getWhiteListDuration(defParts[1]);
             parseCron(defParts[0]);        }
         catch (Exception e) {
-
+            LOG.error(e.getMessage());
         }
-        isValid = true;
+        if (executionTime != null) {
+            isValid = true;
+        }
     }
 
     private void parseCron(String cronDef) {
 
-        CronDefinition cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX);
-        CronParser parser = new CronParser(cronDefinition);
+            CronDefinition cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX);
+            CronParser parser = new CronParser(cronDefinition);
 
-        unixCron = parser.parse(cronDef);
-        executionTime = ExecutionTime.forCron(unixCron);
+            unixCron = parser.parse(cronDef);
+            unixCron.validate();
+            executionTime = ExecutionTime.forCron(unixCron);
 
     }
 
@@ -66,7 +70,6 @@ public class TimeRange {
         ZonedDateTime startLastWhiteListingBeforeAlert = executionTime.lastExecution(alertZonedDateTime).get();
         LocalDateTime endTimeWhitelisting = startLastWhiteListingBeforeAlert.toLocalDateTime().plusSeconds(durationInSeconds);
 
-        //## TO_DO First condition can be removed ?? alertLocalDateTime.isAfter(startLastWhiteListingBeforeAlert.toLocalDateTime()) &&
         if (alertLocalDateTime.isBefore(endTimeWhitelisting)){
             return true;
         }

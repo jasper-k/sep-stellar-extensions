@@ -33,10 +33,10 @@ public class WhiteListRule {
     private HashMap<String,String> relevantRuleComponents = new HashMap();
 
     private Boolean isWhiteListed;
-    private Boolean isValid;
+    private Boolean isValid = false;
     private String timeRangeKey;
     private TimeRange timeRange;
-    private Boolean hasTimeRange;
+    private Boolean hasTimeRange = false;
 
     public enum Filter {
         INCLUDE,
@@ -75,7 +75,7 @@ public class WhiteListRule {
             LOG.error("Whitelist Rule ["+ruleAsJSONString+"] could not be enforced. Reason [Rule has no fields that are part of 'sep.whitelist.extract.fields' in Global Config]");
             return;
         }
-        if (timeRangeKey != null && !timeRange.isValid()) {
+        if (timeRange != null && !timeRange.isValid()) {
             LOG.error("Whitelist Rule ["+ruleAsJSONString+"] has invalid time range definition ["+timeRange.getDefinition()+"]");
             return;
         }
@@ -115,19 +115,31 @@ public class WhiteListRule {
 
             //ruleComponent cannot be checked: field is missing in alert
             if (!alertFieldsAndValues.containsKey(ruleField)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("WhiteListEval Detail : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted [exit 1] : ruleField [" + ruleField + "] not found in field values");
+                }
                 return false;
             }
             String alertValue = alertFieldsAndValues.get(ruleField);
             if ((ruleFilter.equals("include") && !ruleComponent.getValue().equals(alertValue))) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("WhiteListEval Detail : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] not whitelisted [exit 2] : ruleField(include) ["+ruleField+" : "+ruleComponent.getValue()+"] not matched in alert field value : ["+alertValue+"]");
+                }
                 return false;
             }
             if ((ruleFilter.equals("exclude") && ruleComponent.getValue().equals(alertValue))) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("WhiteListEval Detail : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] not whitelisted [exit 3] : ruleField(exclude) ["+ruleField+" : "+ruleComponent.getValue()+"] matched in alert field value :["+alertValue+"]");
+                }
                 return false;
             }
         }
 
         //still need to check whether the whitelist is valid based on the timerange
         if (hasTimeRange && !timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")))) {
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Alert : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] not whitelisted [exit 4] : alert timestamp ["+alertFieldsAndValues.get("timestamp")+"] is not in time range :["+timeRange.getDefinition()+"]");
+            }
             return false;
         }
 
