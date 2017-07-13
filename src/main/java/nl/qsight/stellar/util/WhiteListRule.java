@@ -75,13 +75,17 @@ public class WhiteListRule {
             LOG.error("Whitelist Rule ["+ruleAsJSONString+"] could not be enforced. Reason [Rule has no fields that are part of 'sep.whitelist.extract.fields' in Global Config]");
             return;
         }
-        if (timeRange != null && !timeRange.isValid()) {
-            LOG.error("Whitelist Rule ["+ruleAsJSONString+"] has invalid time range definition ["+timeRange.getDefinition()+"]");
-            return;
+        if (timeRange != null) {
+            if (timeRange.isValid()) {
+                hasTimeRange = true;
+            } else {
+                LOG.error(String.format("Whitelist Rule %s has invalid time range definition %s", ruleAsJSONString, timeRange.getDefinition()));
+                return;
+            }
+        }  else {
+            LOG.debug(String.format("Whitelist Rule %s contains no time range", ruleAsJSONString));
         }
-        else {
-            hasTimeRange = true;
-        }
+
         isValid=true;
 
     }
@@ -92,7 +96,7 @@ public class WhiteListRule {
         while (it.hasNext()) {
             Map.Entry entry = it.next();
             String[] ruleFieldKeyParts = ((String) entry.getKey()).split("\\.");
-            String ruleFieldKey =ruleFieldKeyParts[0];
+            String ruleFieldKey = ruleFieldKeyParts[0];
             if (configWhitelistFields.contains(ruleFieldKey)) {
                 relevantRuleComponents.put(entry.getKey().toString(), entry.getValue().toString());
             }
