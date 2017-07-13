@@ -54,8 +54,8 @@ public class JsonArrayToListTest {
         JSONParser jsonParser = new JSONParser();
         JSONObject rule1 = (JSONObject) jsonParser.parse(rule1String);
 
-        Assert.assertTrue(rule1.get("source_ip") != null);
-        Assert.assertTrue(rule1.get("source_ip").equals("10.10.20.10"));
+        Assert.assertTrue(rule1.get("ip_src_addr") != null);
+        Assert.assertTrue(rule1.get("ip_src_addr").equals("10.10.20.10"));
     }
 
 }
