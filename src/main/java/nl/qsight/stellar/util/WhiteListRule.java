@@ -1,15 +1,14 @@
 package nl.qsight.stellar.util;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 /**
         {
         "ip_src_addr.include.single": "169.10.34.56",
@@ -115,7 +114,7 @@ public class WhiteListRule {
             String[] rulePartKeyComponents = ruleComponent.getKey().split("\\.");
             String ruleField = rulePartKeyComponents[0];
             String ruleFilter = rulePartKeyComponents[1];
-//            String ruleEvaluation = rulePartKeyComponents[2];
+            String ruleEvaluation = rulePartKeyComponents[2];
 
             //ruleComponent cannot be checked: field is missing in alert
             if (!alertFieldsAndValues.containsKey(ruleField)) {
@@ -124,27 +123,26 @@ public class WhiteListRule {
                 }
                 return false;
             }
-            String alertValue = alertFieldsAndValues.get(ruleField);
-            if ((ruleFilter.equals("include") && !ruleComponent.getValue().equals(alertValue))) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("WhiteListEval Detail : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] not whitelisted [exit 2] : ruleField(include) ["+ruleField+" : "+ruleComponent.getValue()+"] not matched in alert field value : ["+alertValue+"]");
-                }
-                return false;
-            }
-            if ((ruleFilter.equals("exclude") && ruleComponent.getValue().equals(alertValue))) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("WhiteListEval Detail : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] not whitelisted [exit 3] : ruleField(exclude) ["+ruleField+" : "+ruleComponent.getValue()+"] matched in alert field value :["+alertValue+"]");
-                }
-                return false;
-            }
-        }
 
-        //still need to check whether the whitelist is valid based on the timerange
-        if (hasTimeRange && !timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")))) {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Alert : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] not whitelisted [exit 4] : alert timestamp ["+alertFieldsAndValues.get("timestamp")+"] is not in time range :["+timeRange.getDefinition()+"]");
+            String alertValue = alertFieldsAndValues.get(ruleField);
+            boolean verdict = false;
+            if (ruleEvaluation.equals("single")) {
+                verdict = StringUtils.equalsIgnoreCase(ruleComponent.getValue(), alertValue);
+            } else if (ruleEvaluation.equals("multi")) {
+                String[] componentValues = ruleComponent.getValue().split(",");
+                List<String> list = Arrays.asList(componentValues);
+                verdict = list.stream().anyMatch(alertValue::equalsIgnoreCase);
+            } else if (ruleEvaluation.equals("range")) {
+                // check time
+                if (ruleField.equals("time")) {
+                    verdict = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
+                }
             }
-            return false;
+
+            // on exclude flip verdict
+            if (ruleFilter.equals("exclude")) {
+                return !verdict;
+            }
         }
 
         return true;

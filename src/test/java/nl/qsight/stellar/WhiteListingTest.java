@@ -23,13 +23,13 @@ public class WhiteListingTest {
 
     /**
      {
-     "ip_src_addr.include": "10.10.10.10",
-     "ip_src_port.exclude": "1212",
-     "protocol.exclude": "tcp",
+     "ip_src_addr.include.single": "10.10.10.10",
+     "ip_src_port.exclude.single": "1212",
+     "protocol.exclude.single": "tcp",
      "time.include.range": "0 23 * 6 2-6|11H",
      "wl_reason": "Allow risk, just for logging",
      "wl_new_risk": "1",
-     "wl_order": "4"
+     "wl_order": "1"
      }
      */
     @Multiline
@@ -37,7 +37,7 @@ public class WhiteListingTest {
 
   /**
    {
-   "user.include": "Jim,Bob",
+   "user.exclude.multi": "Jim,Bob",
    "wl_reason": "Dangerous users, up the risk",
    "wl_new_risk": "10",
    "wl_order": "1"
