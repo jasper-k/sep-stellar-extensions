@@ -23,7 +23,7 @@ public class WhiteListingTest {
 
     /**
      {
-     "ip_src_addr.include.single": "10.10.10.10",
+     "ip_src_addr.include.single": "10.26.10.5",
      "ip_src_port.exclude.single": "1212",
      "protocol.exclude.single": "tcp",
      "time.include.range": "0 23 * 6 2-6|11H",
@@ -37,7 +37,7 @@ public class WhiteListingTest {
 
   /**
    {
-   "user.exclude.multi": "Jim,Bob",
+   "user.include.multi": "Jim,Bob",
    "wl_reason": "Dangerous users, up the risk",
    "wl_new_risk": "10",
    "wl_order": "1"
@@ -46,8 +46,18 @@ public class WhiteListingTest {
   @Multiline
   private String rule2;
 
+  /**
+   {
+   "ip_src_addr.include.range": "10.26.10.0/29",
+   "wl_reason": "From 10.26.10.0 till 10.26.10.7",
+   "wl_new_risk": "10",
+   "wl_order": "1"
+   }
+   */
+  @Multiline
+  private String rule3;
 
-    private Map<String,String> alertFieldsAndValues = new HashMap<String,String>() {{put("ip_src_addr","10.10.10.10");
+    private Map<String,String> alertFieldsAndValues = new HashMap<String,String>() {{put("ip_src_addr","10.26.10.7");
                                                                                      put("ip_src_port","1213");
                                                                                      put("protocol","udp");
                                                                                      put("timestamp","1498640504554");
@@ -94,6 +104,19 @@ public class WhiteListingTest {
 
     Object remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(mockList)", ImmutableMap.of("mockList", mockList));
     Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertFieldsAndValues , "rule", rule2));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+
+  }
+
+  @Test
+  public void testIpInCidr() throws Exception {
+
+    Object remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(mockList)", ImmutableMap.of("mockList", mockList));
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertFieldsAndValues , "rule", rule3));
 
     //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
     JSONObject whiteListReason = (JSONObject) resultObj;

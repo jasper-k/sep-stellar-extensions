@@ -2,6 +2,7 @@ package nl.qsight.stellar.util;
 
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -81,8 +82,6 @@ public class WhiteListRule {
                 LOG.error(String.format("Whitelist Rule %s has invalid time range definition %s", ruleAsJSONString, timeRange.getDefinition()));
                 return;
             }
-        }  else {
-            LOG.debug(String.format("Whitelist Rule %s contains no time range", ruleAsJSONString));
         }
 
         isValid=true;
@@ -107,7 +106,6 @@ public class WhiteListRule {
     }
 
     public Boolean isWhiteListed(Map<String,String> alertFieldsAndValues) {
-
         Iterator<Map.Entry<String,String>> it = relevantRuleComponents.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, String> ruleComponent = it.next();
@@ -125,27 +123,37 @@ public class WhiteListRule {
             }
 
             String alertValue = alertFieldsAndValues.get(ruleField);
-            boolean verdict = false;
+
             if (ruleEvaluation.equals("single")) {
-                verdict = StringUtils.equalsIgnoreCase(ruleComponent.getValue(), alertValue);
+                isWhiteListed = StringUtils.equalsIgnoreCase(ruleComponent.getValue(), alertValue);
             } else if (ruleEvaluation.equals("multi")) {
                 String[] componentValues = ruleComponent.getValue().split(",");
                 List<String> list = Arrays.asList(componentValues);
-                verdict = list.stream().anyMatch(alertValue::equalsIgnoreCase);
+                isWhiteListed = list.stream().anyMatch(alertValue::equalsIgnoreCase);
             } else if (ruleEvaluation.equals("range")) {
                 // check time
                 if (ruleField.equals("time")) {
-                    verdict = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
+                    isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
+                }
+
+                // check ip range
+                if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
+                    String[] componentValues = ruleComponent.getValue().split(",");
+                    for (String s : componentValues) {
+                        SubnetUtils utils = new SubnetUtils(s);
+                        utils.setInclusiveHostCount(true);
+                        isWhiteListed = utils.getInfo().isInRange(alertValue);
+                    }
                 }
             }
 
-            // on exclude flip verdict
+            // on exclude flip isWhiteListed
             if (ruleFilter.equals("exclude")) {
-                return !verdict;
+                return !isWhiteListed;
             }
         }
 
-        return true;
+        return isWhiteListed;
 
     }
 
