@@ -1,6 +1,5 @@
 package nl.qsight.stellar.util;
 
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
@@ -98,7 +97,7 @@ public class WhiteListRule {
             if (configWhitelistFields.contains(ruleFieldKey)) {
                 relevantRuleComponents.put(entry.getKey().toString(), entry.getValue().toString());
             }
-            if (ruleFieldKey.equals("time")) {
+            if (ruleFieldKey.equals("timestamp")) {
                 timeRangeKey = entry.getKey().toString();
                 timeRange = new TimeRange(entry.getValue().toString());
             }
@@ -132,7 +131,7 @@ public class WhiteListRule {
                 isWhiteListed = list.stream().anyMatch(alertValue::equalsIgnoreCase);
             } else if (ruleEvaluation.equals("range")) {
                 // check time
-                if (ruleField.equals("time")) {
+                if (ruleField.equals("timestamp")) {
                     isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
                 }
 
@@ -150,6 +149,11 @@ public class WhiteListRule {
             // on exclude flip isWhiteListed
             if (ruleFilter.equals("exclude")) {
                 return !isWhiteListed;
+            }
+
+            // early exit
+            if (!isWhiteListed) {
+                return isWhiteListed;
             }
         }
 

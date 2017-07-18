@@ -66,7 +66,7 @@ public class TimeRange {
     public Boolean isAlertInWhiteListRange(Long timestamp) {
 
         LocalDateTime alertLocalDateTime = LocalDateTime.ofEpochSecond(timestamp/1000L, 0, ZoneOffset.UTC);
-        ZonedDateTime alertZonedDateTime = ZonedDateTime.of(alertLocalDateTime,ZoneOffset.UTC);
+        ZonedDateTime alertZonedDateTime = ZonedDateTime.of(alertLocalDateTime, ZoneOffset.UTC);
         ZonedDateTime startLastWhiteListingBeforeAlert = executionTime.lastExecution(alertZonedDateTime).get();
         LocalDateTime endTimeWhitelisting = startLastWhiteListingBeforeAlert.toLocalDateTime().plusSeconds(durationInSeconds);
 

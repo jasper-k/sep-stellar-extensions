@@ -17,117 +17,220 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//import static org.apache.metron.common.utils.StellarProcessorUtils.run;
-
 public class WhiteListingTest {
 
-    /**
-     {
-     "ip_src_addr.include.single": "10.26.10.5",
-     "ip_src_port.exclude.single": "1212",
-     "protocol.exclude.single": "tcp",
-     "time.include.range": "0 23 * 6 2-6|11H",
-     "wl_reason": "Allow risk, just for logging",
-     "wl_new_risk": "1",
-     "wl_order": "1"
-     }
-     */
-    @Multiline
-    private String rule;
+  private List<String> mockList = new ArrayList<>();
+  private static Context context;
+  private static Object remapRes;
+  private static final String EXTRACT_FIELDS_KEY = "sep.whitelist.extract.fields";
 
   /**
    {
-   "user.include.multi": "Jim,Bob",
-   "wl_reason": "Dangerous users, up the risk",
-   "wl_new_risk": "10",
+   "ip_src_addr.include.single": "10.26.10.5",
+   "ip_dst_addr.include.single": "172.20.3.18",
+   "ip_src_port.include.single": "10564",
+   "ip_dst_port.include.single": "21",
+   "protocol.include.single": "tcp",
+   "user.include.single": "john",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_new_risk": "1",
    "wl_order": "1"
    }
    */
   @Multiline
-  private String rule2;
+  private String all__include__single;
 
   /**
    {
    "ip_src_addr.include.range": "10.26.10.0/29",
-   "wl_reason": "From 10.26.10.0 till 10.26.10.7",
-   "wl_new_risk": "10",
+   "ip_dst_addr.include.range": "172.20.3.18/24",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_new_risk": "1",
    "wl_order": "1"
    }
    */
   @Multiline
-  private String rule3;
+  private String ip__include__range;
 
-    private Map<String,String> alertFieldsAndValues = new HashMap<String,String>() {{put("ip_src_addr","10.26.10.7");
-                                                                                     put("ip_src_port","1213");
-                                                                                     put("protocol","udp");
-                                                                                     put("timestamp","1498640504554");
-                                                                                     put("user","Jim");
-                                                                                }};
-    private List<String> mockList = new ArrayList<>();
+  /**
+   {
+   "timestamp.include.range": "0 8 * * 1-5|8H",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_new_risk": "1",
+   "wl_order": "1"
+   }
+   */
+  @Multiline
+  private String time__include__range;
 
-    private static Context context;
-    private static final String EXTRACT_FIELDS_KEY = "sep.whitelist.extract.fields";
+  /**
+   {
+   "user.include.multi": "john,marc",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_new_risk": "1",
+   "wl_order": "1"
+   }
+   */
+  @Multiline
+  private String user__include__multi;
 
-    @Before
+  /**
+   {
+   "protocol.exclude.single": "udp",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_new_risk": "1",
+   "wl_order": "1"
+   }
+   */
+  @Multiline
+  private String protocol__exclude__single;
 
-    public void setup() throws Exception {
+  /**
+   {
+   "ip_src_addr.exclude.range": "192.168.10.0/29",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_new_risk": "1",
+   "wl_order": "1"
+   }
+   */
+  @Multiline
+  private String ip__exclude__range;
 
-        context = new Context.Builder()
-                .with( Context.Capabilities.GLOBAL_CONFIG
-                        , () -> ImmutableMap.of(EXTRACT_FIELDS_KEY
-                                , "'_ip_src_addr',ip_src_addr,'_ip_src_port',ip_src_port,'_timestamp',timestamp,'_protocol',protocol,'_user',user"
-                                , "protocol"
-                                , "TCP"
-                        )
-                )
-                .build();
-    }
+  /**
+   {
+   "timestamp.exclude.range": "0 22 * * 1-5|2H",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_new_risk": "1",
+   "wl_order": "1"
+   }
+   */
+  @Multiline
+  private String time__exclude__range;
 
-    @Test
-    public void testExtractValues() throws Exception {
+  private Map<String,String> alertMatch = new HashMap<String,String>() {{
+    put("ip_src_addr","10.26.10.5");
+    put("ip_dst_addr","172.20.3.18");
+    put("ip_src_port","10564");
+    put("ip_dst_port","21");
+    put("protocol","tcp");
+    put("user","John");
+    put("timestamp","1498640504554"); //Wed Jun 28 2017 11:01:44 GMT+0200
+  }};
 
-        Object remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(mockList)", ImmutableMap.of("mockList", mockList));
-        Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertFieldsAndValues , "rule", rule));
+  private Map<String,String> alertNoMatch = new HashMap<String,String>() {{
+    put("ip_src_addr","10.26.10.5");
+    put("ip_dst_addr","172.20.3.18");
+    put("ip_src_port","10564");
+    put("ip_dst_port","21");
+    put("protocol","tcp");
+    put("user","Marc");
+    put("timestamp","1498640504554"); //Wed Jun 28 2017 11:01:44 GMT+0200
+  }};
 
-        //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
-        JSONObject whiteListReason = (JSONObject) resultObj;
+  @Before
+  public void setup() throws Exception {
+    context = new Context.Builder()
+            .with( Context.Capabilities.GLOBAL_CONFIG
+                    , () -> ImmutableMap.of(EXTRACT_FIELDS_KEY
+                            , "'_ip_src_addr',ip_src_addr,'_ip_dst_addr',ip_dst_addr,'_ip_src_port',ip_src_port,'_ip_dst_port',ip_dst_port,'_protocol',protocol,'_user',user,'_timestamp',timestamp"
+                    )
+            )
+            .build();
 
-        System.out.println(whiteListReason);
-
-        Assert.assertTrue(whiteListReason != null);
-        Assert.assertTrue(whiteListReason.containsKey("wl_order"));
-
-    }
-
-  @Test
-  public void testValueInList() throws Exception {
-
-    Object remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(mockList)", ImmutableMap.of("mockList", mockList));
-    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertFieldsAndValues , "rule", rule2));
-
-    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
-    JSONObject whiteListReason = (JSONObject) resultObj;
-    Assert.assertTrue(whiteListReason != null);
-    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
-
+    remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(mockList)", ImmutableMap.of("mockList", mockList));
   }
 
   @Test
-  public void testIpInCidr() throws Exception {
-
-    Object remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(mockList)", ImmutableMap.of("mockList", mockList));
-    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertFieldsAndValues , "rule", rule3));
+  public void testAllIncludeSingle() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", all__include__single));
 
     //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
     JSONObject whiteListReason = (JSONObject) resultObj;
+
     Assert.assertTrue(whiteListReason != null);
     Assert.assertTrue(whiteListReason.containsKey("wl_order"));
-
   }
 
-    public Object run(String rule, Map<String, Object> variables) throws Exception {
-        StellarProcessor processor = new StellarProcessor();
-        return processor.parse(rule, x -> variables.get(x), StellarFunctions.FUNCTION_RESOLVER(), context);
-    }
+  @Test
+  public void testIpIncludeRange() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", ip__include__range));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+  }
+
+  @Test
+  public void testTimeIncludeRange() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", time__include__range));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+  }
+
+  @Test
+  public void testUserIncludeMulti() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", user__include__multi));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+  }
+
+  @Test
+  public void testExcludeSingle() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", protocol__exclude__single));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+  }
+
+  @Test
+  public void testIpExcludeRange() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", ip__exclude__range));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+  }
+
+  @Test
+  public void testTimeExcludeRange() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", time__exclude__range));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+  }
+
+  @Test
+  public void testNoMatch() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertNoMatch, "rule", all__include__single));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertNull(whiteListReason);
+  }
+
+
+  public Object run(String rule, Map<String, Object> variables) throws Exception {
+    StellarProcessor processor = new StellarProcessor();
+    return processor.parse(rule, x -> variables.get(x), StellarFunctions.FUNCTION_RESOLVER(), context);
+  }
 
 }
