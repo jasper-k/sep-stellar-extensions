@@ -63,16 +63,20 @@ public class JsonArrayToListFunction {
                 json = (JSONObject) jsonParser.parse(jsonAsString);
             } catch (org.json.simple.parser.ParseException e) {
                 throw new ParseException("Argument ["+jsonAsString+"] could not be parsed as valid JSON",e);
-             }
+            }
 
             List<String> outList = new ArrayList<>();
-            Object rulesObject = json.get(key);
-            if (rulesObject != null) {
-                for (Object rule : ((JSONArray) rulesObject)) {
-                    outList.add(rule.toString());
+
+            if (json.containsKey(key)) {
+                Object rulesObject = json.get(key);
+                if (rulesObject != null) {
+                    for (Object rule : ((JSONArray) rulesObject)) {
+                        outList.add(rule.toString());
+                    }
                 }
             }
-                return outList;
+
+            return outList;
         }
     }
 }
