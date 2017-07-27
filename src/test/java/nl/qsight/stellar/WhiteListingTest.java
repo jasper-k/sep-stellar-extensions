@@ -54,7 +54,7 @@ public class WhiteListingTest {
 
   /**
    {
-   "timestamp.include": "0 8 * * 1-5|8H",
+   "timestamp.include": "0 8 * * 1-5 | 8H",
    "wl_reason": "Allow risk, just for logging",
    "wl_new_risk": "1",
    "wl_order": "1"
@@ -98,7 +98,7 @@ public class WhiteListingTest {
 
   /**
    {
-   "timestamp.exclude": "0 22 * * 1-5|2H",
+   "timestamp.exclude": "0 22 * * 1-5 | 2H",
    "wl_reason": "Allow risk, just for logging",
    "wl_new_risk": "1",
    "wl_order": "1"
