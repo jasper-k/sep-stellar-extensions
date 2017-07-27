@@ -1,9 +1,6 @@
 package nl.qsight.stellar;
 
 import nl.qsight.stellar.util.WhiteListRule;
-import org.apache.metron.common.configuration.ConfigurationType;
-import org.apache.metron.common.configuration.ConfigurationsUtils;
-import org.apache.metron.common.configuration.EnrichmentConfigurations;
 
 import org.apache.metron.common.dsl.BaseStellarFunction;
 import org.apache.metron.common.dsl.Stellar;

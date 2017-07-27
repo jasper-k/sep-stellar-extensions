@@ -2,7 +2,6 @@ package nl.qsight.stellar;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.collections.map.HashedMap;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.Assert;
@@ -34,8 +33,6 @@ public class JsonArrayToListTest {
      }*/
     @Multiline
     private String rulesJsonAsString;
-
-
 
     @Test
     public void testJsonArrayToList() throws Exception {

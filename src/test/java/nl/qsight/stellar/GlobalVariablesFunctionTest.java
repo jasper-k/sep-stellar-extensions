@@ -13,7 +13,6 @@ import java.util.Map;
 
 public class GlobalVariablesFunctionTest {
 
-
     private static Context context;
 
     @Before

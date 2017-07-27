@@ -11,10 +11,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-//import static org.apache.metron.common.utils.StellarProcessorUtils.run;
 
 public class ExtractValuesTest {
 
@@ -47,9 +44,6 @@ public class ExtractValuesTest {
         Object globalRes = run("GET_GLOBAL_VAR('"+EXTRACT_FIELDS_KEY+"')", new HashMap<>());
         String joinFieldsParam = (String) globalRes;
         Object joinRes = run("JOIN(["+joinFieldsParam+"],'^')", ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "timestamp","1498640504554"));
-
- //       Object joinRes = run("JOIN(['_ip_dst_addr',ip_dst_addr,'_timestamp',timestamp,'_ip_dest_port',ip_dest_port,'_protocol',proetocol],'^')",
- //               ImmutableMap.of("ip_dst_port", "1111", "protocol", "UDP", "ip_dst_addr","185.70.112.55", "timestamp","1498640504554","rebuildArguments",rebuildArguments));
 
         String joinedFields = (String) joinRes;
         Object splitRes = run("SPLIT('"+joinedFields+"','^')", new HashMap<>());
