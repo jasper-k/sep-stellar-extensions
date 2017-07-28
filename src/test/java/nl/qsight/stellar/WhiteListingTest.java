@@ -120,10 +120,10 @@ public class WhiteListingTest {
   private Map<String,String> alertNoMatch = new HashMap<String,String>() {{
     put("ip_src_addr","10.26.10.5");
     put("ip_dst_addr","172.20.3.18");
-    put("ip_src_port","10564");
+    put("ip_src_port","9854");
     put("ip_dst_port","21");
     put("protocol","tcp");
-    put("user","Marc");
+    put("user","John");
     put("timestamp","1498640504554"); //Wed Jun 28 2017 11:01:44 GMT+0200
   }};
 
