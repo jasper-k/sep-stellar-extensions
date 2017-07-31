@@ -86,7 +86,7 @@ public class WhiteListRule {
             String ruleField = rulePartKeyComponents[0];
             String ruleFilter = rulePartKeyComponents[1];
 
-            //ruleComponent cannot be checked: field is missing in alert
+            // ruleComponent cannot be checked: field is missing in alert
             if (!alertFieldsAndValues.containsKey(ruleField)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("WhiteListEval Detail : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted [exit 1] : ruleField [" + ruleField + "] not found in field values");
@@ -94,28 +94,33 @@ public class WhiteListRule {
                 return false;
             }
 
+            String ruleValue = ruleComponent.getValue();
             String alertValue = alertFieldsAndValues.get(ruleField);
 
-            if (ruleField.equals("timestamp")) {
-                isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
-            } else if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
-                String[] componentValues = ruleComponent.getValue().split(",");
-                for (String s : componentValues) {
-                    SubnetUtils utils = new SubnetUtils(s);
-                    utils.setInclusiveHostCount(true);
-                    isWhiteListed = utils.getInfo().isInRange(alertValue);
-                }
+            // check for wildcard
+            if (ruleValue.equals("*")) {
+                isWhiteListed = true;
             } else {
-                String[] componentValues = ruleComponent.getValue().split(",");
-                List<String> list = Arrays.asList(componentValues);
-                isWhiteListed = list.stream().anyMatch(alertValue::equalsIgnoreCase);
+                if (ruleField.equals("timestamp")) {
+                    isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
+                } else if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
+                    String[] componentValues = ruleValue.split(",");
+                    for (String s : componentValues) {
+                        SubnetUtils utils = new SubnetUtils(s);
+                        utils.setInclusiveHostCount(true);
+                        isWhiteListed = utils.getInfo().isInRange(alertValue);
+                    }
+                } else {
+                    String[] componentValues = ruleValue.split(",");
+                    List<String> list = Arrays.asList(componentValues);
+                    isWhiteListed = list.stream().anyMatch(alertValue::equalsIgnoreCase);
+                }
             }
 
             // on exclude flip isWhiteListed
             if (ruleFilter.equals("exclude")) {
                 return !isWhiteListed;
             }
-
             // early exit
             if (!isWhiteListed) {
                 return isWhiteListed;
