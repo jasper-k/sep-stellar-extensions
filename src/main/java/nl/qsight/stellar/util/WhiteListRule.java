@@ -109,11 +109,22 @@ public class WhiteListRule {
                         SubnetUtils utils = new SubnetUtils(s);
                         utils.setInclusiveHostCount(true);
                         isWhiteListed = utils.getInfo().isInRange(alertValue);
+
+                        // if one value matched, early exit
+                        if (isWhiteListed) {
+                            break;
+                        }
                     }
                 } else {
                     String[] componentValues = ruleValue.split(",");
-                    List<String> list = Arrays.asList(componentValues);
-                    isWhiteListed = list.stream().anyMatch(alertValue::equalsIgnoreCase);
+                    for (String s : componentValues) {
+                        isWhiteListed = alertValue.equalsIgnoreCase(s);
+
+                        // if one value matched, early exit
+                        if (isWhiteListed) {
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -121,6 +132,7 @@ public class WhiteListRule {
             if (ruleFilter.equals("exclude")) {
                 return !isWhiteListed;
             }
+
             // early exit
             if (!isWhiteListed) {
                 return isWhiteListed;
@@ -128,7 +140,6 @@ public class WhiteListRule {
         }
 
         return isWhiteListed;
-
     }
 
     private void parseJson(String jsonAsString) {
