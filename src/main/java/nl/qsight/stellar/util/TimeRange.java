@@ -14,9 +14,8 @@ import org.threeten.bp.ZonedDateTime;
 
 
 /**
-   "time.include.range": "0 23 * 6 2-6|8H"
+   "time.include.range": "0 23 * 6 2-6 | 8H"
  */
-
 public class TimeRange {
 
     private static final Logger LOG = Logger.getLogger(TimeRange.class);
@@ -42,8 +41,9 @@ public class TimeRange {
                 throw new WhitelistTimeRangeParsingException("Could not parse whitelist time range def : "+definition);
 
             }
-            durationInSeconds = getWhiteListDuration(defParts[1]);
-            parseCron(defParts[0]);        }
+            durationInSeconds = getWhiteListDuration(defParts[1].trim());
+            parseCron(defParts[0].trim());
+        }
         catch (Exception e) {
             LOG.error(e.getMessage());
         }
@@ -66,7 +66,7 @@ public class TimeRange {
     public Boolean isAlertInWhiteListRange(Long timestamp) {
 
         LocalDateTime alertLocalDateTime = LocalDateTime.ofEpochSecond(timestamp/1000L, 0, ZoneOffset.UTC);
-        ZonedDateTime alertZonedDateTime = ZonedDateTime.of(alertLocalDateTime,ZoneOffset.UTC);
+        ZonedDateTime alertZonedDateTime = ZonedDateTime.of(alertLocalDateTime, ZoneOffset.UTC);
         ZonedDateTime startLastWhiteListingBeforeAlert = executionTime.lastExecution(alertZonedDateTime).get();
         LocalDateTime endTimeWhitelisting = startLastWhiteListingBeforeAlert.toLocalDateTime().plusSeconds(durationInSeconds);
 

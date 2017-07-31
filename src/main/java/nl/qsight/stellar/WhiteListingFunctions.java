@@ -1,9 +1,6 @@
 package nl.qsight.stellar;
 
 import nl.qsight.stellar.util.WhiteListRule;
-import org.apache.metron.common.configuration.ConfigurationType;
-import org.apache.metron.common.configuration.ConfigurationsUtils;
-import org.apache.metron.common.configuration.EnrichmentConfigurations;
 
 import org.apache.metron.common.dsl.BaseStellarFunction;
 import org.apache.metron.common.dsl.Stellar;
@@ -18,25 +15,24 @@ import java.util.Map;
 /**
   {
  "rules": [{
-     "ip_src_addr": "10.10.20.10",
-    "ip_dst_addr.include.range": "192.168.0.0/24",
+     "ip_src_addr.include": "10.10.20.10/32",
+    "ip_dst_addr.include": "192.168.0.0/24",
     "reason": "Cannot fix the application",
     "new_risk": "4",
     "order": "3"
     },{
-    "ip_src_addr.include": "169.10.34.56",
-    "ip_dst_addr.exclude": "192.168.0.10",
-    "ip_dst_port.include.multi": "8010,8012,9046",
-    "user.include.list": "admin,supervisor",
-    "protocol": "tcp",
-    "time": {},
+    "ip_src_addr.include": "169.10.34.56/32",
+    "ip_dst_addr.exclude": "192.168.0.10/32",
+    "ip_dst_port.include": "8010,8012,9046",
+    "user.include": "admin,supervisor",
+    "protocol.include": "tcp",
+    "time": "0 22 * * 1-5 | 2H",
     "reason": "Allow risk, just for logging",
     "new_risk": "1",
     "order": "4"
  }]
  }
  */
-
 public class WhiteListingFunctions {
 
     protected static final Logger LOG = LoggerFactory.getLogger(WhiteListingFunctions.class);
