@@ -107,18 +107,6 @@ public class WhiteListingTest {
   @Multiline
   private String time_exclude;
 
-  /**
-   {
-   "ip_src_addr.include": "10.26.10.5/32",
-   "ip_src_port.include": "*",
-   "wl_reason": "Allow risk, just for logging",
-   "wl_new_risk": "1",
-   "wl_order": "1"
-   }
-   */
-  @Multiline
-  private String wildcard_include;
-
   private Map<String,String> alertMatch = new HashMap<String,String>() {{
     put("ip_src_addr","10.26.10.5");
     put("ip_dst_addr","172.20.3.18");
@@ -221,17 +209,6 @@ public class WhiteListingTest {
   @Test
   public void testTimeExcludeRange() throws Exception {
     Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", time_exclude));
-
-    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
-    JSONObject whiteListReason = (JSONObject) resultObj;
-
-    Assert.assertTrue(whiteListReason != null);
-    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
-  }
-
-  @Test
-  public void testPortIncludeWildcard() throws Exception {
-    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", wildcard_include));
 
     //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
     JSONObject whiteListReason = (JSONObject) resultObj;
