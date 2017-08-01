@@ -86,7 +86,7 @@ public class WhiteListRule {
             String ruleField = rulePartKeyComponents[0];
             String ruleFilter = rulePartKeyComponents[1];
 
-            //ruleComponent cannot be checked: field is missing in alert
+            // ruleComponent cannot be checked: field is missing in alert
             if (!alertFieldsAndValues.containsKey(ruleField)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("WhiteListEval Detail : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted [exit 1] : ruleField [" + ruleField + "] not found in field values");
@@ -94,21 +94,33 @@ public class WhiteListRule {
                 return false;
             }
 
+            String ruleValue = ruleComponent.getValue();
             String alertValue = alertFieldsAndValues.get(ruleField);
 
             if (ruleField.equals("timestamp")) {
                 isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
             } else if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
-                String[] componentValues = ruleComponent.getValue().split(",");
+                String[] componentValues = ruleValue.split(",");
                 for (String s : componentValues) {
                     SubnetUtils utils = new SubnetUtils(s);
                     utils.setInclusiveHostCount(true);
                     isWhiteListed = utils.getInfo().isInRange(alertValue);
+
+                    // if one value matched, early exit
+                    if (isWhiteListed) {
+                        break;
+                    }
                 }
             } else {
-                String[] componentValues = ruleComponent.getValue().split(",");
-                List<String> list = Arrays.asList(componentValues);
-                isWhiteListed = list.stream().anyMatch(alertValue::equalsIgnoreCase);
+                String[] componentValues = ruleValue.split(",");
+                for (String s : componentValues) {
+                    isWhiteListed = alertValue.equalsIgnoreCase(s);
+
+                    // if one value matched, early exit
+                    if (isWhiteListed) {
+                        break;
+                    }
+                }
             }
 
             // on exclude flip isWhiteListed
@@ -123,7 +135,6 @@ public class WhiteListRule {
         }
 
         return isWhiteListed;
-
     }
 
     private void parseJson(String jsonAsString) {
