@@ -97,33 +97,28 @@ public class WhiteListRule {
             String ruleValue = ruleComponent.getValue();
             String alertValue = alertFieldsAndValues.get(ruleField);
 
-            // check for wildcard
-            if (ruleValue.equals("*")) {
-                isWhiteListed = true;
-            } else {
-                if (ruleField.equals("timestamp")) {
-                    isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
-                } else if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
-                    String[] componentValues = ruleValue.split(",");
-                    for (String s : componentValues) {
-                        SubnetUtils utils = new SubnetUtils(s);
-                        utils.setInclusiveHostCount(true);
-                        isWhiteListed = utils.getInfo().isInRange(alertValue);
+            if (ruleField.equals("timestamp")) {
+                isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
+            } else if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
+                String[] componentValues = ruleValue.split(",");
+                for (String s : componentValues) {
+                    SubnetUtils utils = new SubnetUtils(s);
+                    utils.setInclusiveHostCount(true);
+                    isWhiteListed = utils.getInfo().isInRange(alertValue);
 
-                        // if one value matched, early exit
-                        if (isWhiteListed) {
-                            break;
-                        }
+                    // if one value matched, early exit
+                    if (isWhiteListed) {
+                        break;
                     }
-                } else {
-                    String[] componentValues = ruleValue.split(",");
-                    for (String s : componentValues) {
-                        isWhiteListed = alertValue.equalsIgnoreCase(s);
+                }
+            } else {
+                String[] componentValues = ruleValue.split(",");
+                for (String s : componentValues) {
+                    isWhiteListed = alertValue.equalsIgnoreCase(s);
 
-                        // if one value matched, early exit
-                        if (isWhiteListed) {
-                            break;
-                        }
+                    // if one value matched, early exit
+                    if (isWhiteListed) {
+                        break;
                     }
                 }
             }
