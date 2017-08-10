@@ -2,8 +2,8 @@ package nl.qsight.stellar;
 
 import nl.qsight.stellar.util.WhiteListRule;
 
-import org.apache.metron.common.dsl.BaseStellarFunction;
-import org.apache.metron.common.dsl.Stellar;
+import org.apache.metron.stellar.dsl.Stellar;
+import org.apache.metron.stellar.dsl.BaseStellarFunction;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

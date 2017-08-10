@@ -2,6 +2,7 @@ package nl.qsight.stellar;
 
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.metron.stellar.common.utils.StellarProcessorUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.Assert;
@@ -9,7 +10,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.apache.metron.common.utils.StellarProcessorUtils.run;
 
 public class JsonArrayToListTest {
 
@@ -42,7 +42,7 @@ public class JsonArrayToListTest {
                 .append("','rules'").append(')');
 
         //Stellar parser does not like newlines
-        Object res = run(sb.toString().replaceAll("\n",""),new HashedMap());
+        Object res = StellarProcessorUtils.run(sb.toString().replaceAll("\n",""),new HashedMap());
         List<String> rulesList = (List<String>) res;
 
         Assert.assertTrue(rulesList.size() == 2);

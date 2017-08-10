@@ -3,9 +3,8 @@ package nl.qsight.stellar;
 import com.google.common.collect.ImmutableMap;
 import org.adrianwalker.multilinestring.Multiline;
 
-import org.apache.metron.common.dsl.Context;
-import org.apache.metron.common.dsl.StellarFunctions;
-import org.apache.metron.common.stellar.StellarProcessor;
+import org.apache.metron.stellar.common.StellarProcessor;
+import org.apache.metron.stellar.dsl.*;
 
 import org.json.simple.JSONObject;
 import org.junit.Assert;
@@ -229,7 +228,7 @@ public class WhiteListingTest {
 
   public Object run(String rule, Map<String, Object> variables) throws Exception {
     StellarProcessor processor = new StellarProcessor();
-    return processor.parse(rule, x -> variables.get(x), StellarFunctions.FUNCTION_RESOLVER(), context);
+    return processor.parse(rule, new DefaultVariableResolver(x -> variables.get(x),x -> variables.containsKey(x)), StellarFunctions.FUNCTION_RESOLVER(), context);
   }
 
 }

@@ -1,10 +1,10 @@
 package nl.qsight.stellar;
 
 import org.apache.log4j.Logger;
-import org.apache.metron.common.dsl.BaseStellarFunction;
-import org.apache.metron.common.dsl.Stellar;
+import org.apache.metron.stellar.dsl.Stellar;
+import org.apache.metron.stellar.dsl.BaseStellarFunction;
 
-import org.apache.metron.common.dsl.ParseException;
+import org.apache.metron.stellar.dsl.ParseException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

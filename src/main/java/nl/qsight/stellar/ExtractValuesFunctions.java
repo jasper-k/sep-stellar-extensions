@@ -2,7 +2,9 @@ package nl.qsight.stellar;
 
 import nl.qsight.stellar.util.WhiteListRule;
 import org.apache.log4j.Logger;
-import org.apache.metron.common.dsl.*;
+import org.apache.metron.stellar.dsl.Context;
+import org.apache.metron.stellar.dsl.Stellar;
+import org.apache.metron.stellar.dsl.StellarFunction;
 
 import java.util.*;
 import java.util.regex.Pattern;
