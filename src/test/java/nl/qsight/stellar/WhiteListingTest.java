@@ -119,7 +119,8 @@ public class WhiteListingTest {
   private Map<String,String> alertNoMatch = new HashMap<String,String>() {{
     put("ip_src_addr","10.26.10.5");
     put("ip_dst_addr","172.20.3.18");
-    put("ip_src_port","9854");
+//    put("ip_src_port","9854");
+    put("ip_src_port",null);
     put("ip_dst_port","21");
     put("protocol","tcp");
     put("user","John");
@@ -212,8 +213,7 @@ public class WhiteListingTest {
     //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
     JSONObject whiteListReason = (JSONObject) resultObj;
 
-    Assert.assertTrue(whiteListReason != null);
-    Assert.assertTrue(whiteListReason.containsKey("wl_order"));
+    Assert.assertNull(whiteListReason);
   }
 
   @Test
