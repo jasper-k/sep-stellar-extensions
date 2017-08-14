@@ -17,7 +17,6 @@ public class WhiteListRule {
     private JSONObject ruleAsJSON;
     private HashMap<String,String> relevantRuleComponents = new HashMap();
 
-    private Boolean isWhiteListed;
     private Boolean isValid = false;
     private String timeRangeKey;
     private TimeRange timeRange;
@@ -58,7 +57,6 @@ public class WhiteListRule {
         }
 
         isValid=true;
-
     }
 
     private void setRelevantRules() {
@@ -79,6 +77,11 @@ public class WhiteListRule {
     }
 
     public Boolean isWhiteListed(Map<String,String> alertFieldsAndValues) {
+
+        //This boolean holds the verdict of a whitelist condition, on checking 1 complete rule. The verdict starts at false, but can change
+        //during the loop through all rule components.
+        Boolean isWhiteListedSoFar = false;
+
         Iterator<Map.Entry<String,String>> it = relevantRuleComponents.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, String> ruleComponent = it.next();
@@ -86,8 +89,10 @@ public class WhiteListRule {
             String ruleField = rulePartKeyComponents[0];
             String ruleFilter = rulePartKeyComponents[1];
 
-            // ruleComponent cannot be checked: field is missing in alert
-            if (!alertFieldsAndValues.containsKey(ruleField)) {
+            // ruleComponent (key) cannot be checked: field is missing in alert
+            // OR
+            // ruleValue itself is NULL
+            if (!alertFieldsAndValues.containsKey(ruleField) || alertFieldsAndValues.get(ruleField) == null) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("WhiteListEval Detail : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted [exit 1] : ruleField [" + ruleField + "] not found in field values");
                 }
@@ -97,44 +102,49 @@ public class WhiteListRule {
             String ruleValue = ruleComponent.getValue();
             String alertValue = alertFieldsAndValues.get(ruleField);
 
+            //Rule DSL notation allows for single value or multiple comma separated values, we don't care
+            String[] ruleComponentValues = ruleValue.split(",");
+
             if (ruleField.equals("timestamp")) {
-                isWhiteListed = timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")));
+
+                //early exit, cause whatever the rule might grant based on alert field values, the specified timerange does not fit
+                if (!timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")))) {
+                    return false;
+                }
+                isWhiteListedSoFar = true;
+
             } else if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
-                String[] componentValues = ruleValue.split(",");
-                for (String s : componentValues) {
+                //Specific check for alert values of ip type
+                for (String s : ruleComponentValues) {
                     SubnetUtils utils = new SubnetUtils(s);
                     utils.setInclusiveHostCount(true);
-                    isWhiteListed = utils.getInfo().isInRange(alertValue);
 
                     // if one value matched, early exit
-                    if (isWhiteListed) {
+                    if (utils.getInfo().isInRange(alertValue)) {
+                        isWhiteListedSoFar = true;
                         break;
                     }
                 }
             } else {
-                String[] componentValues = ruleValue.split(",");
-                for (String s : componentValues) {
-                    isWhiteListed = alertValue.equalsIgnoreCase(s);
-
-                    // if one value matched, early exit
-                    if (isWhiteListed) {
-                        break;
-                    }
+                boolean matchingValue = false;
+                for (int i = 0; i < ruleComponentValues.length && !matchingValue; i++) {
+                    matchingValue = alertValue.equalsIgnoreCase(ruleComponentValues[i]);
                 }
+                isWhiteListedSoFar = matchingValue;
+
             }
 
             // on exclude flip isWhiteListed
-            if (ruleFilter.equals("exclude")) {
-                return !isWhiteListed;
-            }
+            isWhiteListedSoFar = ruleFilter.equals("exclude") ? !isWhiteListedSoFar : isWhiteListedSoFar;
 
-            // early exit
-            if (!isWhiteListed) {
-                return isWhiteListed;
+            // early exit, if after checking 1 complete rule component the verdict isWhiteListedSoFar is still false, we can exit the rule as
+            //it can never apply
+            if (!isWhiteListedSoFar) {
+                return false;
             }
         }
 
-        return isWhiteListed;
+        return isWhiteListedSoFar;
     }
 
     private void parseJson(String jsonAsString) {
