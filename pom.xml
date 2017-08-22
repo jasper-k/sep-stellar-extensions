@@ -12,7 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <global_metron_version>0.4.1.1.2.1.0-21</global_metron_version>
+        <global_metron_version>0.4.1</global_metron_version>
         <global_shade_version>2.4.3</global_shade_version>
         <global_classindex_version>3.3</global_classindex_version>
     </properties>
@@ -49,6 +49,11 @@
             <artifactId>metron-common</artifactId>
             <version>${global_metron_version}</version>
             <!-- NOTE: We will want to depend on the deployed common on the classpath. -->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.metron</groupId>
+            <artifactId>metron-enrichment</artifactId>
+            <version>${global_metron_version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.metron</groupId>
