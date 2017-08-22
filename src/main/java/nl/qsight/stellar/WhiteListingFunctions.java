@@ -56,18 +56,18 @@ public class WhiteListingFunctions {
             if (list.size() < 2) {
                 throw new IllegalStateException("Requires at least a Map of alert fields & values and a rule (JSON string)");
             }
-            Map<String,String> alertFieldsAndValues = (HashMap<String,String>)list.get(0);
+            Map<String,Object> alertFieldsAndValues = (HashMap<String,Object>)list.get(0);
             String ruleAsJsonString = list.get(1).toString();
 
             WhiteListRule rule = new WhiteListRule(ruleAsJsonString);
             if (rule.isValid() && rule.isWhiteListed(alertFieldsAndValues)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] was whitelistlisted by rule : [" + ruleAsJsonString + "]");
+                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] was whitelisted by rule : [" + ruleAsJsonString + "]");
                 }
                 return rule.getWhiteListAlertAdditions();
             }
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Alert : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] was NOT whitelistlisted by rule : ["+ruleAsJsonString+"]");
+                LOG.debug("Alert : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] was NOT whitelisted by rule : ["+ruleAsJsonString+"]");
             }
             return null;
         }

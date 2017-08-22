@@ -11,16 +11,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class WhiteListingTest {
 
-  private List<String> mockList = new ArrayList<>();
   private static Context context;
-  private static Object remapRes;
   private static final String EXTRACT_FIELDS_KEY = "sep.whitelist.extract.fields";
 
   /**
@@ -106,17 +102,17 @@ public class WhiteListingTest {
   @Multiline
   private String time_exclude;
 
-  private Map<String,String> alertMatch = new HashMap<String,String>() {{
+  private Map<String,Object> alertMatch = new HashMap<String,Object>() {{
     put("ip_src_addr","10.26.10.5");
     put("ip_dst_addr","172.20.3.18");
     put("ip_src_port","10564");
     put("ip_dst_port","21");
     put("protocol","tcp");
     put("user","John");
-    put("timestamp","1498640504554"); //Wed Jun 28 2017 11:01:44 GMT+0200
+    put("timestamp",1503318527755L); //Wed Jun 28 2017 11:01:44 GMT+0200
   }};
 
-  private Map<String,String> alertNoMatch = new HashMap<String,String>() {{
+  private Map<String,Object> alertNoMatch = new HashMap<String,Object>() {{
     put("ip_src_addr","10.26.10.5");
     put("ip_dst_addr","172.20.3.18");
 //    put("ip_src_port","9854");
@@ -124,7 +120,7 @@ public class WhiteListingTest {
     put("ip_dst_port","21");
     put("protocol","tcp");
     put("user","John");
-    put("timestamp","1498640504554"); //Wed Jun 28 2017 11:01:44 GMT+0200
+    put("timestamp",1503317538232L); //Wed Jun 28 2017 11:01:44 GMT+0200
   }};
 
   @Before
@@ -136,8 +132,6 @@ public class WhiteListingTest {
                     )
             )
             .build();
-
-    remapRes = run("LIST_OF_FIELDS_AND_KEYS_TO_MAP(mockList)", ImmutableMap.of("mockList", mockList));
   }
 
   @Test

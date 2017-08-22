@@ -8,9 +8,11 @@ import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import nl.qsight.stellar.WhitelistTimeRangeParsingException;
 import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneOffset;
 import org.threeten.bp.ZonedDateTime;
+import org.threeten.bp.format.DateTimeFormatter;
 
 
 /**
@@ -39,7 +41,6 @@ public class TimeRange {
 
             if (defParts.length < 2 ) {
                 throw new WhitelistTimeRangeParsingException("Could not parse whitelist time range def : "+definition);
-
             }
             durationInSeconds = getWhiteListDuration(defParts[1].trim());
             parseCron(defParts[0].trim());
@@ -47,6 +48,7 @@ public class TimeRange {
         catch (Exception e) {
             LOG.error(e.getMessage());
         }
+
         if (executionTime != null) {
             isValid = true;
         }
@@ -54,13 +56,12 @@ public class TimeRange {
 
     private void parseCron(String cronDef) {
 
-            CronDefinition cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX);
-            CronParser parser = new CronParser(cronDefinition);
+        CronDefinition cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX);
+        CronParser parser = new CronParser(cronDefinition);
 
-            unixCron = parser.parse(cronDef);
-            unixCron.validate();
-            executionTime = ExecutionTime.forCron(unixCron);
-
+        unixCron = parser.parse(cronDef);
+        unixCron.validate();
+        executionTime = ExecutionTime.forCron(unixCron);
     }
 
     public Boolean isAlertInWhiteListRange(Long timestamp) {
@@ -70,7 +71,14 @@ public class TimeRange {
         ZonedDateTime startLastWhiteListingBeforeAlert = executionTime.lastExecution(alertZonedDateTime).get();
         LocalDateTime endTimeWhitelisting = startLastWhiteListingBeforeAlert.toLocalDateTime().plusSeconds(durationInSeconds);
 
-        if (alertLocalDateTime.isBefore(endTimeWhitelisting)){
+        Boolean inTimeRange = alertLocalDateTime.isBefore(endTimeWhitelisting);
+
+        if (LOG.isDebugEnabled()) {
+            String verdict = inTimeRange ? "is within" : "not in";
+            LOG.debug("Timerange Eval Detail : [" + timestamp + " / "+ alertLocalDateTime.format(DateTimeFormatter.ISO_DATE_TIME)+"] "+verdict+ " timerange definition [" + definition+ "] ");
+        }
+
+        if (inTimeRange){
             return true;
         }
         return false;
