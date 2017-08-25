@@ -83,8 +83,7 @@ public class WhiteListingFunctions {
      */
     @Stellar(name = "WHITELISTED"
             , description = "Checks whether a raised alert is whitelisted according to a set of rules applied to various event fields."
-            , params = {"directive = A result map of a lookup in HBase (ENRICHMENT_GET) containing the 'directive_id' field"
-            , "alert_kv's - A map of field names and their values of the alert to check against a rule"
+            , params = {"alert_kv's - A map of field names and their values of the alert to check against a rule"
             }
             , returns = "JsonMap containing the whitelist reason, null if NOT whitelisted")
     public static class whitelisted implements StellarFunction {
@@ -92,28 +91,29 @@ public class WhiteListingFunctions {
         @Override
         public Object apply(List<Object> list, Context context) {
 
-            if (list.size() < 2) {
+            if (list.size() < 1) {
                 throw new IllegalStateException("Requires at least a (Json) HBase result map and a Map of alert fields & values");
             }
 
-            HashMap<String, Object> directiveLkpMap = (HashMap<String, Object>)list.get(0);
-            Map<String,Object> alertFieldsAndValues = (HashMap<String,Object>)list.get(1);
+            Map<String,Object> alertFieldsAndValues = (HashMap<String,Object>)list.get(0);
 
-            if (directiveLkpMap == null || alertFieldsAndValues == null || directiveLkpMap.get("directive_id") == null) {
+            if (alertFieldsAndValues == null) {
+                throw new IllegalStateException("Parameter \"alert_kv's\" may not be NULL");
+            }
+
+            StellarFunction hBaseRulesLkpFunction = new SimpleHBaseEnrichmentFunctions.EnrichmentGet();
+            if (!hBaseRulesLkpFunction.isInitialized()) {
+                hBaseRulesLkpFunction.initialize(context);
+            }
+
+            Object hBaseLkpKey = alertFieldsAndValues.get("directive_lkp_key");
+
+            if (hBaseLkpKey == null) {
                 if (LOG.isDebugEnabled()) {
-                    String reason = directiveLkpMap == null ? "directive lookup map is null" : "directive_id is null";
-                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted : directive = [" + reason + "]");
+                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted : REQUIRED key 'directive_lkp_key' is missing");
                 }
                 return null;
             }
-
-            StellarFunction hBaseRulesLkp = new SimpleHBaseEnrichmentFunctions.EnrichmentGet();
-            if (!hBaseRulesLkp.isInitialized()) {
-                hBaseRulesLkp.initialize(context);
-            }
-
-            Object directiveId = directiveLkpMap.get("directive_id");
-            Object hBaseLkpKey = "onsarn-"+directiveId.toString();
 
             List<Object> args = new ArrayList<Object>() {{{ add(0,"whitelist_rule");
                                                             add(1, hBaseLkpKey);
@@ -121,11 +121,12 @@ public class WhiteListingFunctions {
                                                             add(3, "rule");
                                                         }}};
 
-            Object hBaseRulesReturn = hBaseRulesLkp.apply(args,context);
+            Object hBaseRulesReturn = hBaseRulesLkpFunction.apply(args, context);
 
-            if (hBaseRulesReturn == null) {
+            if (hBaseRulesReturn == null || ((HashMap<String,Object>)hBaseRulesReturn).get("rules") == null) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted : rules = NULL");
+                    String lkpInfo = "lookup arguments : "+hBaseLkpKey.toString();
+                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted : rules = NULL or EMPTY"+lkpInfo);
                 }
                 return null;
             }

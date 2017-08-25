@@ -107,7 +107,7 @@ public class WhiteListRule {
             } else {
                 boolean matchingValue = false;
                 for (int i = 0; i < ruleComponentValues.length && !matchingValue; i++) {
-                    matchingValue = ((String)alertValue).equalsIgnoreCase(ruleComponentValues[i]);
+                    matchingValue = alertValue.toString().equalsIgnoreCase(ruleComponentValues[i]);
                 }
                 isWhiteListedSoFar = matchingValue;
 
