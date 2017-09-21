@@ -4,7 +4,7 @@
 
     <groupId>nl.qsight.stellar</groupId>
     <artifactId>sep-stellar-extensions</artifactId>
-    <version>0.4.1-QS-SNAPSHOT</version>
+    <version>0.4.1</version>
     <packaging>jar</packaging>
 
     <name>Stellar Functions</name>
@@ -12,7 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <global_metron_version>0.4.1-QS</global_metron_version>
+        <global_metron_version>0.4.1</global_metron_version>
         <global_shade_version>2.4.3</global_shade_version>
         <global_classindex_version>3.3</global_classindex_version>
     </properties>
