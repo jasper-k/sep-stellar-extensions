@@ -11,80 +11,59 @@ import java.util.*;
 public class WhiteListRule {
 
     private static final Logger LOG = Logger.getLogger(WhiteListRule.class);
-    private static Set<String> configWhitelistFields;
 
     private String ruleAsJSONString;
     private JSONObject ruleAsJSON;
-    private HashMap<String,String> relevantRuleComponents = new HashMap();
 
     private Boolean isValid = false;
-    private String timeRangeKey;
     private TimeRange timeRange;
-    private Boolean hasTimeRange = false;
-
-    public enum Filter {
-        INCLUDE,
-        EXCLUDE;
-
-        private String predicate;
-
-    }
+    private HashMap<String,String> relevantRuleComponents = new HashMap();
 
     public WhiteListRule(String jsonAsString) {
 
         ruleAsJSONString = jsonAsString;
         parseJson(ruleAsJSONString);
-        validateRule();
+        setAndValidateRule();
     }
 
-    private void validateRule() {
-        if (configWhitelistFields == null || configWhitelistFields.isEmpty()) {
-            LOG.error("Whitelist Rule ["+ruleAsJSONString+"] could not be parsed. Reason [GlobalConfig property 'sep.whitelist.extract.fields' not available]");
-            return;
+    private void setAndValidateRule() {
+
+        Iterator<Map.Entry> it = ruleAsJSON.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = it.next();
+            String ruleFieldKey = entry.getKey().toString();
+            if (!ruleFieldKey.startsWith("wl_")) {
+                relevantRuleComponents.put(ruleFieldKey, entry.getValue().toString());
+            }
+            if (ruleFieldKey.startsWith("timestamp")) {
+                timeRange = new TimeRange(entry.getValue().toString());
+            }
         }
-        setRelevantRules();
-        if (relevantRuleComponents.isEmpty()) {
-            LOG.error("Whitelist Rule ["+ruleAsJSONString+"] could not be enforced. Reason [Rule has no fields that are part of 'sep.whitelist.extract.fields' in Global Config]");
-            return;
-        }
-        if (timeRange != null) {
-            if (timeRange.isValid()) {
-                hasTimeRange = true;
-            } else {
+        if (timeRange != null && !timeRange.isValid()) {
                 LOG.error(String.format("Whitelist Rule %s has invalid time range definition %s", ruleAsJSONString, timeRange.getDefinition()));
                 return;
-            }
         }
 
         isValid=true;
     }
 
-    private void setRelevantRules() {
 
-        Iterator<Map.Entry> it = ruleAsJSON.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = it.next();
-            String[] ruleFieldKeyParts = ((String) entry.getKey()).split("\\.");
-            String ruleFieldKey = ruleFieldKeyParts[0];
-            if (configWhitelistFields.contains(ruleFieldKey)) {
-                relevantRuleComponents.put(entry.getKey().toString(), entry.getValue().toString());
-            }
-            if (ruleFieldKey.equals("timestamp")) {
-                timeRangeKey = entry.getKey().toString();
-                timeRange = new TimeRange(entry.getValue().toString());
-            }
-        }
-    }
-
-    public Boolean isWhiteListed(Map<String,String> alertFieldsAndValues) {
+    public Boolean isWhiteListed(Map<String,Object> alertFieldsAndValues) {
 
         //This boolean holds the verdict of a whitelist condition, on checking 1 complete rule. The verdict starts at false, but can change
         //during the loop through all rule components.
         Boolean isWhiteListedSoFar = false;
 
-        Iterator<Map.Entry<String,String>> it = relevantRuleComponents.entrySet().iterator();
+        Iterator<Map.Entry<String,String>> it = ruleAsJSON.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, String> ruleComponent = it.next();
+
+            //A complete WL rule also contains fields that are meant to be appended to the stream
+            //but are not rule components that can be checked
+            if (ruleComponent.getKey().toString().startsWith("wl_")) {
+                continue;
+            }
+
             String[] rulePartKeyComponents = ruleComponent.getKey().split("\\.");
             String ruleField = rulePartKeyComponents[0];
             String ruleFilter = rulePartKeyComponents[1];
@@ -100,7 +79,7 @@ public class WhiteListRule {
             }
 
             String ruleValue = ruleComponent.getValue();
-            String alertValue = alertFieldsAndValues.get(ruleField);
+            Object alertValue = alertFieldsAndValues.get(ruleField);
 
             //Rule DSL notation allows for single value or multiple comma separated values, we don't care
             String[] ruleComponentValues = ruleValue.split(",");
@@ -108,7 +87,7 @@ public class WhiteListRule {
             if (ruleField.equals("timestamp")) {
 
                 //early exit, cause whatever the rule might grant based on alert field values, the specified timerange does not fit
-                if (!timeRange.isAlertInWhiteListRange(Long.parseLong(alertFieldsAndValues.get("timestamp")))) {
+                if (!timeRange.isAlertInWhiteListRange(Long.parseLong(alertValue.toString()))) {
                     return false;
                 }
                 isWhiteListedSoFar = true;
@@ -120,7 +99,7 @@ public class WhiteListRule {
                     utils.setInclusiveHostCount(true);
 
                     // if one value matched, early exit
-                    if (utils.getInfo().isInRange(alertValue)) {
+                    if (utils.getInfo().isInRange((String)alertValue)) {
                         isWhiteListedSoFar = true;
                         break;
                     }
@@ -128,7 +107,7 @@ public class WhiteListRule {
             } else {
                 boolean matchingValue = false;
                 for (int i = 0; i < ruleComponentValues.length && !matchingValue; i++) {
-                    matchingValue = alertValue.equalsIgnoreCase(ruleComponentValues[i]);
+                    matchingValue = alertValue.toString().equalsIgnoreCase(ruleComponentValues[i]);
                 }
                 isWhiteListedSoFar = matchingValue;
 
@@ -172,13 +151,4 @@ public class WhiteListRule {
         }
         return resJson;
     }
-
-    public static Set<String> getConfigWhitelistFields() {
-        return configWhitelistFields;
-    }
-
-    public static void setConfigWhitelistFields(Set<String> configWhitelistFields) {
-        WhiteListRule.configWhitelistFields = configWhitelistFields;
-    }
-
 }
