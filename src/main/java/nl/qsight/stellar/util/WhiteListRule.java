@@ -145,8 +145,8 @@ public class WhiteListRule {
 
         JSONObject resJson = new JSONObject();
         for (Object key : ruleAsJSON.keySet()) {
-            if (key.toString().startsWith("wl_")) {
-                resJson.put(key,ruleAsJSON.get(key));
+            if (key.toString().startsWith("wl_") && !key.toString().equalsIgnoreCase("wl_order")) {
+                resJson.put(key.toString().replace("wl_", ""), ruleAsJSON.get(key));
             }
         }
         return resJson;

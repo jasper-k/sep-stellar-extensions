@@ -8,7 +8,6 @@ import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import nl.qsight.stellar.WhitelistTimeRangeParsingException;
 import org.apache.log4j.Logger;
-import org.json.simple.JSONObject;
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneOffset;
 import org.threeten.bp.ZonedDateTime;
