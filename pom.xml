@@ -4,7 +4,7 @@
 
     <groupId>nl.qsight.stellar</groupId>
     <artifactId>sep-stellar-extensions</artifactId>
-    <version>0.4.1.1.2.1.0</version>
+    <version>0.4.1.1.3.0.0</version>
     <packaging>jar</packaging>
 
     <name>Stellar Functions</name>
@@ -18,7 +18,7 @@
     </properties>
 
     <repositories>
-        <repository>
+   <!--     <repository>
             <releases>
                 <enabled>true</enabled>
                 <updatePolicy>always</updatePolicy>
@@ -34,6 +34,7 @@
             <url>http://repo.hortonworks.com/content/repositories/releases/</url>
             <layout>default</layout>
         </repository>
+-->
         <repository>
             <id>multiline-release-repo</id>
             <url>https://raw.github.com/benelog/multiline/master/maven-repository</url>
@@ -157,21 +158,21 @@
                     </dependency>
                 </dependencies>
             </plugin>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptor>src/main/assembly/assembly.xml</descriptor>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                                <phase>package</phase> <!-- bind to the packaging phase -->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <configuration>
+                        <descriptor>src/main/assembly/assembly.xml</descriptor>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                            <phase>package</phase> <!-- bind to the packaging phase -->
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
         </plugins>
     </build>
 </project>

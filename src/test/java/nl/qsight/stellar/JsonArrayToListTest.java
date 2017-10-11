@@ -18,7 +18,7 @@ public class JsonArrayToListTest {
      "ip_src_addr": "10.10.20.10",
      "ip_dst_addr.include.range": "192.168.0.0/24",
      "reason": "Cannot fix the application",
-     "new_risk": "4",
+     "new_priority": "4",
      "order": "3"
      },{"ip_src_addr.include": "169.10.34.56",
      "ip_dst_addr.exclude": "192.168.0.10",
@@ -27,7 +27,7 @@ public class JsonArrayToListTest {
      "protocol": "tcp",
      "time": {},
      "reason": "Allow risk, just for logging",
-     "new_risk": "1",
+     "new_priority": "1",
      "order": "4"
      }]
      }*/

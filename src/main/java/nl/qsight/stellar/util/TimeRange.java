@@ -6,7 +6,6 @@ import com.cronutils.model.definition.CronDefinition;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
-import nl.qsight.stellar.WhitelistTimeRangeParsingException;
 import org.apache.log4j.Logger;
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneOffset;
@@ -39,7 +38,7 @@ public class TimeRange {
             String[] defParts = definition.split("\\|");
 
             if (defParts.length < 2 ) {
-                throw new WhitelistTimeRangeParsingException("Could not parse whitelist time range def : "+definition);
+                throw new Exception("Could not parse whitelist time range def : "+definition);
             }
             durationInSeconds = getWhiteListDuration(defParts[1].trim());
             parseCron(defParts[0].trim());
@@ -83,7 +82,7 @@ public class TimeRange {
         return false;
     }
 
-    private static Long getWhiteListDuration(String durationDef) throws WhitelistTimeRangeParsingException {
+    private static Long getWhiteListDuration(String durationDef) throws Exception {
 
         try {
               String[] durationStringParts = durationDef.split("(?<=\\d)(?=\\D)");
@@ -103,7 +102,7 @@ public class TimeRange {
                 }
 
         } catch (Exception e) {
-            throw new WhitelistTimeRangeParsingException("Could not parse or get whitelist duration from whitelist time range notation : "+durationDef,e.getCause());
+            throw new Exception("Could not parse or get whitelist duration from whitelist time range notation : "+durationDef,e.getCause());
         }
 
     }

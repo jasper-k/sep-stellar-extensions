@@ -42,49 +42,15 @@ public class WhiteListingFunctions {
     protected static final Logger LOG = LoggerFactory.getLogger(WhiteListingFunctions.class);
 
     /**
-     * Stellar Function: IS_WHITELISTED
-     * <p>
-     * Checks whether a raised alert is whitelisted according to a set of rules applied to various event fields
-     */
-    @Stellar(name = "IS_WHITELISTED"
-            , description = "Checks whether a raised alert is whitelisted according to a set of rules applied to various event fields."
-            , params = {"alert_kv's - A map of field names and their values of the alert to check against a rule"
-            , "rule - The whitelisting rule expressed in a JSON String"}
-            , returns = "JsonMap containing the whitelist reason, null if NOT whitelisted")
-    public static class IsWhitelisted extends BaseStellarFunction {
-
-        @Override
-        public Object apply(List<Object> list) {
-
-            if (list.size() < 2) {
-                throw new IllegalStateException("Requires at least a Map of alert fields & values and a rule (JSON string)");
-            }
-            Map<String,Object> alertFieldsAndValues = (HashMap<String,Object>)list.get(0);
-            String ruleAsJsonString = list.get(1).toString();
-
-            WhiteListRule rule = new WhiteListRule(ruleAsJsonString);
-            if (rule.isValid() && rule.isWhiteListed(alertFieldsAndValues)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] was whitelisted by rule : [" + ruleAsJsonString + "]");
-                }
-                return rule.getWhiteListAlertAdditions();
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Alert : ["+new JSONObject(alertFieldsAndValues).toJSONString()+"] was NOT whitelisted by rule : ["+ruleAsJsonString+"]");
-            }
-            return null;
-        }
-
-
-    /**
      * Stellar Function: WHITELISTED
      * <p>
      * Checks whether a raised alert is whitelisted according to a set of rules applied to various event fields
      */
     @Stellar(name = "WHITELISTED"
             , description = "Checks whether a raised alert is whitelisted according to a set of rules applied to various event fields."
-            , params = {"alert_kv's - A map of field names and their values of the alert to check against a rule"
-            }
+            , params = {"alert_kv's - A map of field names and their values of the alert to check against a rule. " +
+            "The field 'directive_lkp_key' is mandatory in the map to enable lookup of rules in Hbase" +
+            "In addition add all alert key which could be evaluated by any rule" }
             , returns = "JsonMap containing the whitelist reason, null if NOT whitelisted")
     public static class whitelisted implements StellarFunction {
 
@@ -92,7 +58,7 @@ public class WhiteListingFunctions {
         public Object apply(List<Object> list, Context context) {
 
             if (list.size() < 1) {
-                throw new IllegalStateException("Requires at least a (Json) HBase result map and a Map of alert fields & values");
+                throw new IllegalStateException("Requires at least a (Json) Map of alert fields & values and the field 'directive_lkp_key'");
             }
 
             Map<String,Object> alertFieldsAndValues = (HashMap<String,Object>)list.get(0);
@@ -101,18 +67,18 @@ public class WhiteListingFunctions {
                 throw new IllegalStateException("Parameter \"alert_kv's\" may not be NULL");
             }
 
-            StellarFunction hBaseRulesLkpFunction = new SimpleHBaseEnrichmentFunctions.EnrichmentGet();
-            if (!hBaseRulesLkpFunction.isInitialized()) {
-                hBaseRulesLkpFunction.initialize(context);
-            }
-
             Object hBaseLkpKey = alertFieldsAndValues.get("directive_lkp_key");
 
             if (hBaseLkpKey == null) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted : REQUIRED key 'directive_lkp_key' is missing");
+                    LOG.debug("Alert : [" + new JSONObject(alertFieldsAndValues).toJSONString() + "] not whitelisted : REQUIRED key 'directive_lkp_key' is missing in the 'alert_kvs' function");
                 }
                 return null;
+            }
+
+            StellarFunction hBaseRulesLkpFunction = new SimpleHBaseEnrichmentFunctions.EnrichmentGet();
+            if (!hBaseRulesLkpFunction.isInitialized()) {
+                hBaseRulesLkpFunction.initialize(context);
             }
 
             List<Object> args = new ArrayList<Object>() {{{ add(0,"whitelist_rule");
@@ -177,5 +143,4 @@ public class WhiteListingFunctions {
             return false;
         }
     }
-}
 }

@@ -40,7 +40,7 @@ public class WhiteListingTest {
    "ip_src_addr.include": "10.26.10.0/29",
    "ip_dst_addr.include": "172.20.3.18/24",
    "wl_reason": "Allow risk, just for logging",
-   "wl_risk": "1",
+   "wl_priority": "1",
    "wl_order": "1"
    }
    */
@@ -51,7 +51,7 @@ public class WhiteListingTest {
    {
    "timestamp.include": "0 8 * * 1-5 | 8H",
    "wl_reason": "Allow risk, just for logging",
-   "wl_risk": "1",
+   "wl_priority": "1",
    "wl_order": "1"
    }
    */
@@ -62,7 +62,7 @@ public class WhiteListingTest {
    {
    "user.include": "john,marc",
    "wl_reason": "Allow risk, just for logging",
-   "wl_risk": "1",
+   "wl_priority": "1",
    "wl_order": "1"
    }
    */
@@ -73,7 +73,7 @@ public class WhiteListingTest {
    {
    "protocol.exclude": "udp",
    "wl_reason": "Allow risk, just for logging",
-   "wl_risk": "1",
+   "wl_priority": "1",
    "wl_order": "1"
    }
    */
@@ -84,7 +84,7 @@ public class WhiteListingTest {
    {
    "ip_src_addr.exclude": "192.168.10.0/29",
    "wl_reason": "Allow risk, just for logging",
-   "wl_risk": "1",
+   "wl_priority": "1",
    "wl_order": "1"
    }
    */
@@ -95,7 +95,7 @@ public class WhiteListingTest {
    {
    "timestamp.exclude": "0 22 * * 1-5 | 2H",
    "wl_reason": "Allow risk, just for logging",
-   "wl_risk": "1",
+   "wl_priority": "1",
    "wl_order": "1"
    }
    */
