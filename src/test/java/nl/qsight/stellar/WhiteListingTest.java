@@ -102,6 +102,17 @@ public class WhiteListingTest {
   @Multiline
   private String time_exclude;
 
+  /**
+   {
+   "detectors.include": "4535",
+   "wl_reason": "Allow risk, just for logging",
+   "wl_risk": "1",
+   "wl_order": "1"
+   }
+   */
+  @Multiline
+  private String detector_include;
+
   private Map<String,Object> alertMatch = new HashMap<String,Object>() {{
     put("ip_src_addr","10.26.10.5");
     put("ip_dst_addr","172.20.3.18");
@@ -109,6 +120,7 @@ public class WhiteListingTest {
     put("ip_dst_port","21");
     put("protocol","tcp");
     put("user","John");
+    put("detectors","4535");
     put("timestamp",1503318527755L); //Wed Jun 28 2017 11:01:44 GMT+0200
   }};
 
@@ -128,7 +140,7 @@ public class WhiteListingTest {
     context = new Context.Builder()
             .with( Context.Capabilities.GLOBAL_CONFIG
                     , () -> ImmutableMap.of(EXTRACT_FIELDS_KEY
-                            , "'_ip_src_addr',ip_src_addr,'_ip_dst_addr',ip_dst_addr,'_ip_src_port',ip_src_port,'_ip_dst_port',ip_dst_port,'_protocol',protocol,'_user',user,'_timestamp',timestamp"
+                            , "'_ip_src_addr',ip_src_addr,'_ip_dst_addr',ip_dst_addr,'_ip_src_port',ip_src_port,'_ip_dst_port',ip_dst_port,'_protocol',protocol,'_user',user,'_timestamp',timestamp,'_detectors',detectors"
                     )
             )
             .build();
@@ -223,6 +235,17 @@ public class WhiteListingTest {
   public Object run(String rule, Map<String, Object> variables) throws Exception {
     StellarProcessor processor = new StellarProcessor();
     return processor.parse(rule, new DefaultVariableResolver(x -> variables.get(x),x -> variables.containsKey(x)), StellarFunctions.FUNCTION_RESOLVER(), context);
+  }
+
+  @Test
+  public void testDetectorIncludeSingle() throws Exception {
+    Object resultObj = run("IS_WHITELISTED(alert_kv,rule)", ImmutableMap.of("alert_kv", alertMatch, "rule", detector_include));
+
+    //Return object = null when NOT whitelisted, a JSONObject (Map) when whitelisted
+    JSONObject whiteListReason = (JSONObject) resultObj;
+
+    Assert.assertTrue(whiteListReason != null);
+    Assert.assertTrue(whiteListReason.containsKey("reason"));
   }
 
 }

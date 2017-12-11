@@ -95,7 +95,14 @@ public class WhiteListRule {
             } else if (ruleField.equals("ip_src_addr") || ruleField.equals("ip_dst_addr")) {
                 //Specific check for alert values of ip type
                 for (String s : ruleComponentValues) {
-                    SubnetUtils utils = new SubnetUtils(s);
+                    SubnetUtils utils;
+                    try {
+                        utils = new SubnetUtils(s);
+                    } catch (IllegalArgumentException e) {
+                        LOG.warn(String.format("Invalid cidr address: [%s]. %s", s, e));
+                        break;
+                    }
+
                     utils.setInclusiveHostCount(true);
 
                     // if one value matched, early exit
